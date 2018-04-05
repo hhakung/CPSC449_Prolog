@@ -15,15 +15,20 @@ validMachine(A) :-
 	member(A, [1,2,3,4,5,6,7,8]).
 	
 validTask(T) :-
-	member(T, "ABCDEFGH").
+	member(T, [A,B,C,D,E,F,G]).
 	
 % get length of list
 len(0, []).
 len(L+l, [_|T]) :- len(L, T).
-	
-% TODO removeNotChar([Char|T], Result) :-
-	
-% TODO removeSpaces 
+
+% Remove '(', ')', ',' in atom	
+removeNotChar( X , Y ) :-
+	atom_chars( X , Xs ) ,
+	select( '(', Xs , Ys ),
+	select(')', Ys, Ys2),
+	select(',', Ys2, Ys3),
+	select(' ', Ys3, Ys4),
+	atom_chars( Y , Ys4).
 
 parseTooNearSoft([]) :- !.
 parseTooNearSoft([A,B,C|Tail]) :-
@@ -37,7 +42,7 @@ parseTooNearSoft([A,B,C|Tail]) :-
 	).
 
 getTooNearSoft([Head|Tail]) :-
-	\+ sub_string(Head, _, 1, ':')	% if Head does not contain ':'
+	\+ sub_atom(Head, _, 1, _, ':')	% if Head does not contain ':'
 	-> ( removeNotChar(Head, Result), 
 		 append(Result, List, List),
 		 getTooNearSoft(Tail),
@@ -58,7 +63,7 @@ parseTooNearHard([A,B|Tail]) :-
 	).
 
 getTooNearHard([Head|Tail]) :-
-	\+ sub_string(Head, _, 1, ':')	% if Head does not contain ':'
+	\+ sub_atom(Head, _, 1, _, ':')	% if Head does not contain ':'
 	-> ( removeNotChar(Head, Result), 
 		 append(Result, List, List),
 		 getTooNearHard(Tail),
@@ -79,7 +84,7 @@ parseForbidden([A,B|Tail]) :-
 	).
 
 getForbidden([Head|Tail]) :-
-	\+ sub_string(Head, _, 1, ':')	% if Head does not contain ':'
+	\+ sub_atom(Head, _, 1, _, ':')	% if Head does not contain ':'
 	-> ( removeNotChar(Head, Result), 
 		 append(Result, List, List),
 		 getForbidden(Tail),
@@ -98,7 +103,7 @@ checkErrorsMacPen([Row|T]) :-
 	checkErrorsMacPen(T).
 
 getMacPen([H|T], Penalties) :-
-	\+ sub_string(H, _, 1, ':')	% if Head does not contain ':'
+	\+ sub_atom(H, _, 1, _, ':')	% if Head does not contain ':'
 	-> ( removeSpaces(H, Result), 
 		 append(Result, Penalties, Penalties),
 		 getMacPen(T, Penalties),
@@ -119,7 +124,7 @@ parseForced([A,B|Tail]) :-
 	).
 
 getForced([Head|Tail]) :-
-	\+ sub_string(Head, _, 1, ':')	% if Head does not contain ':'
+	\+ sub_atom(Head, _, 1, _, ':')	% if Head does not contain ':'
 	-> ( removeNotChar(Head, Result), 
 		 append(Result, List, List),
 		 getForced(Tail),
@@ -129,20 +134,37 @@ getForced([Head|Tail]) :-
 		).
 	
 	
+parse_lines([]).
 parse_lines([Line|Tail]) :-
-	sub_string(Line, Ind, Len, 'forced partial assignment:') -> getForced(Tail) 
-	; sub_string(Line, Ind, Len, 'forbidden machine:') -> getForbidden(Tail) 
-	; sub_string(Line, Ind, Len, 'too-near tasks:') -> getTooNearHard(Tail) 
-	; sub_string(Line, Ind, Len, 'machine penalties:') -> getMacPen(Tail, []) 
-	; sub_string(Line, Ind, Len, 'too-near penalties:') -> getTooNearSoft(Tail) 
+	sub_atom(Line, Ind, Len, After, 'forced partial assignment:') -> getForced(Tail) 
+	; sub_atom(Line, Ind, Len, After, 'forbidden machine:') -> getForbidden(Tail) 
+	; sub_atom(Line, Ind, Len, After, 'too-near tasks:') -> getTooNearHard(Tail) 
+	; sub_atom(Line, Ind, Len, After, 'machine penalties:') -> getMacPen(Tail, []) 
+	; sub_atom(Line, Ind, Len, After, 'too-near penalties:') -> getTooNearSoft(Tail) 
 	; parse_lines(Tail).
 
 
-% please help me on this 
 read_file(File) :-
         open(File, read, Stream),
- 
-        % Get list of lines from stream
-        % parse_lines(Lines),
-		
+        read_lines(Stream, Lines),
+		write(Lines),
+		% parse_lines(Lines),
         close(Stream).
+		
+read_lines(Stream, []) :-
+	at_end_of_stream(Stream).
+		
+read_lines(Stream, [Head|Tail]) :-
+	get_code(Stream, Char),
+	checkCharAndReadRest(Char, Chars, Stream),
+	atom_codes(Head, Chars),
+	read_lines(Stream, Tail).
+	
+checkCharAndReadRest(10,[],_) :- !.
+checkCharAndReadRest(-1,[],_) :- !.
+checkCharAndReadRest(end_of_file,[],_) :- !.
+
+checkCharAndReadRest(Char,[Char|Chars],Stream) :-
+	get_code(Stream,NextChar),
+	checkCharAndReadRest(NextChar,Chars,Stream).
+	
