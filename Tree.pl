@@ -27,3 +27,10 @@ minLowerBound(Array, Index) :- min_list(Array, X), getIndex(X, Array, Index).
 % Not catching exception yet (empty list)
 getIndex(X, Array, Index) :- nth0(Index, Array, X).
 
+
+% Write to the outputFile
+% Works as main (?)
+assignTasks(InputFile, OutputFile) :-
+                       open(OutputFile, write, File),
+                       write(File, 'abcdefg'),
+                       close(File).
