@@ -154,11 +154,22 @@ read_file(File) :-
 read_lines(Stream, []) :-
 	at_end_of_stream(Stream).
 		
+% read_lines(Stream, [Head|Tail]) :-
+% 	get_code(Stream, Char),
+% 	checkCharAndReadRest(Char, Chars, Stream),
+% 	atom_codes(Head, Chars),
+%	read_lines(Stream, Tail).
+		
 read_lines(Stream, [Head|Tail]) :-
 	get_code(Stream, Char),
-	checkCharAndReadRest(Char, Chars, Stream),
-	atom_codes(Head, Chars),
-	read_lines(Stream, Tail).
+	% if Char is not new line
+	( (\+ Char is 10)
+	-> 
+	( checkCharAndReadRest(Char, Chars, Stream),
+	atom_codes(Head, Chars), write(Head), nl, read_lines(Stream, Tail) )  %string_codes(S, Chars), 
+	; 
+	read_lines(Stream, Tail)
+	).
 	
 checkCharAndReadRest(10,[],_) :- !.
 checkCharAndReadRest(-1,[],_) :- !.
