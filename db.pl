@@ -15,7 +15,7 @@ validMachine(A) :-
 	member(A, [1,2,3,4,5,6,7,8]).
 	
 validTask(T) :-
-	member(T, [A,B,C,D,E,F,G]).
+	member(T, [A,B,C,D,E,F,G,H]).
 	
 % get length of list
 len(0, []).
