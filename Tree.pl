@@ -29,8 +29,8 @@ getIndex(X, Array, Index) :- nth0(Index, Array, X).
 
 
 % Write to the outputFile
-% Works as main (?)
-assignTasks(InputFile, OutputFile) :-
+% Works as main
+main(InputFile, OutputFile) :-
                        open(OutputFile, write, File),
                        write(File, 'abcdefg'),
                        close(File).
