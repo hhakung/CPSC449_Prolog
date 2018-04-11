@@ -112,64 +112,47 @@ getMacPen([H|T], Penalties) :-
 		 ; checkErrorsMacPen(Penalties)
 		).
 
-parseForced([]) :- !.
-parseForced([A,B|Tail]) :-
-	forall(
-		member(A, [A,B|Tail]),
-		((validMachine(A), validTask(B)),
-		is_set([A,B|Tail])
-		-> assert(forced(A, B)),
-			parseForced(Tail)
-			; assert(invalidForced(1)))
-	).
-
+getForced(['forbidden machine:'|Tail]) :- !.
 getForced([Head|Tail]) :-
-	\+ sub_atom(Head, _, 1, _, ':')	% if Head does not contain ':'
-	-> ( removeNotChar(Head, Result), 
-		 append(Result, List, List),
-		 getForced(Tail),
-		 len(I, List), 
-		 Length is I,
-		 \+ (Length mod 2 is 0) -> assert(invalidForced(1)) ; parseForced(List)
-		).
+	sub_atom(Head, 1, 3, After, Sub),
+	sub_atom(Sub, 0, 1, AfterFirst, SubFirst),
+	sub_atom(Sub, 2, 1, AfterSecond, SubSecond),
+	assertz(forced(SubFirst, SubSecond)),
+	getForced(Tail).
 	
 	
 parse_lines([]).
 parse_lines([Line|Tail]) :-
-	sub_atom(Line, Ind, Len, After, 'forced partial assignment:') -> getForced(Tail) 
-	; sub_atom(Line, Ind, Len, After, 'forbidden machine:') -> getForbidden(Tail) 
-	; sub_atom(Line, Ind, Len, After, 'too-near tasks:') -> getTooNearHard(Tail) 
-	; sub_atom(Line, Ind, Len, After, 'machine penalties:') -> getMacPen(Tail, []) 
-	; sub_atom(Line, Ind, Len, After, 'too-near penalties:') -> getTooNearSoft(Tail) 
+	sub_atom(Line, Ind, Len, After, 'forced partial assignment:') -> (nl, nl, write(Tail), getForced(Tail))
+	; sub_atom(Line, Ind, Len, After, 'forbidden machine:') -> (nl, nl, write(Tail), getForbidden(Tail))
+	; sub_atom(Line, Ind, Len, After, 'too-near tasks:') -> (nl, nl, write(Tail), getTooNearHard(Tail))
+	; sub_atom(Line, Ind, Len, After, 'machine penalties:') -> (nl, nl, write(Tail), getMacPen(Tail, [])) 
+	; sub_atom(Line, Ind, Len, After, 'too-near penalities:') -> (nl, nl, write(Tail), getTooNearSoft(Tail)) 
 	; parse_lines(Tail).
 
 
 read_file(File) :-
         open(File, read, Stream),
         read_lines(Stream, Lines),
-		write(Lines),
-		% parse_lines(Lines),
+		
+		% remove empty strings from the list
+		delete(Lines, '', NewLines1),
+		delete(NewLines1, ' ', NewLines2),
+		
+		write(NewLines2),
+		parse_lines(NewLines2),
         close(Stream).
 		
 read_lines(Stream, []) :-
 	at_end_of_stream(Stream).
 		
-% read_lines(Stream, [Head|Tail]) :-
-% 	get_code(Stream, Char),
-% 	checkCharAndReadRest(Char, Chars, Stream),
-% 	atom_codes(Head, Chars),
-%	read_lines(Stream, Tail).
-		
-read_lines(Stream, [Head|Tail]) :-
-	get_code(Stream, Char),
-	% if Char is not new line
-	( (\+ Char is 10)
-	-> 
-	( checkCharAndReadRest(Char, Chars, Stream),
-	atom_codes(Head, Chars), write(Head), nl, read_lines(Stream, Tail) )  %string_codes(S, Chars), 
-	; 
-	read_lines(Stream, Tail)
-	).
+ read_lines(Stream, [Head|Tail]) :-
+ 	get_code(Stream, Char),
+ 	checkCharAndReadRest(Char, Chars, Stream),
+ 	atom_codes(Head, Chars),
+	write(Head),
+	nl,
+	read_lines(Stream, Tail).
 	
 checkCharAndReadRest(10,[],_) :- !.
 checkCharAndReadRest(-1,[],_) :- !.
@@ -178,4 +161,3 @@ checkCharAndReadRest(end_of_file,[],_) :- !.
 checkCharAndReadRest(Char,[Char|Chars],Stream) :-
 	get_code(Stream,NextChar),
 	checkCharAndReadRest(NextChar,Chars,Stream).
-	
