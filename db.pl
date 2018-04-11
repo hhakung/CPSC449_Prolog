@@ -51,48 +51,6 @@ getTooNearSoft([Head|Tail]) :-
 		 (Length mod 2 is 0) -> assert(invalidTooNearSoft(1)) ; parseTooNearSoft(List)
 		).
 
-parseTooNearHard([]) :- !.
-parseTooNearHard([A,B|Tail]) :-
-	forall(
-		member(A, [A,B|Tail]),
-		((validTask(A), validTask(B)),
-		is_set([A,B|Tail])
-		-> assert(too_near_hard(A, B)),
-			parseTooNearHard(Tail)
-			; assert(invalidTask(1)))
-	).
-
-getTooNearHard([Head|Tail]) :-
-	\+ sub_atom(Head, _, 1, _, ':')	% if Head does not contain ':'
-	-> ( removeNotChar(Head, Result), 
-		 append(Result, List, List),
-		 getTooNearHard(Tail),
-		 len(I, List),
-		 Length is I,
-		 \+ (Length mod 2 is 0) -> assert(invalidTask(1)) ; parseTooNearHard(List)
-		).
-
-parseForbidden([]) :- !.
-parseForbidden([A,B|Tail]) :-
-	forall(
-		member(A, [A,B|Tail]),
-		((validMachine(A), validTask(B)),
-		is_set([A,B|Tail])
-		-> assert(forbidden(A, B)),
-			parseForbidden(Tail)
-			; assert(invalidForbidden(1)))
-	).
-
-getForbidden([Head|Tail]) :-
-	\+ sub_atom(Head, _, 1, _, ':')	% if Head does not contain ':'
-	-> ( removeNotChar(Head, Result), 
-		 append(Result, List, List),
-		 getForbidden(Tail),
-		 len(I, List),
-		 Length is I,
-		 \+ (Length mod 2 is 0) -> assert(invalidForbidden(1)) ; parseForbidden(List)
-		).
-
 checkErrorsMacPen([Row|T]) :-
 	\+ length(Row, 8) -> assert(invalidPenalty(1))
 	; forall(
@@ -111,25 +69,58 @@ getMacPen([H|T], Penalties) :-
 		 -> assert(invalidPenalty(1)) 
 		 ; checkErrorsMacPen(Penalties)
 		).
-
-getForced(['forbidden machine:'|Tail]) :- !.
-getForced([Head|Tail]) :-
+		
+getMacPen([]).
+getMacPen(['too-near penalities'|Tail]) :- !.
+getMacPen([Head|Tail]) :- 
+	nl, nl, write('getMacPen'), nl, write(Tail),
+	%%%%%%%%%% NEED TO CONVERT A LINE OF PENALTIES INTO A LIST
+	%%%%%%%%%% AND PUT THAT LIST INTO THE CORRESPONDING ROW IN A 2D LIST
+		
+getTooNearHard([]).
+getTooNearHard(['machine penalties:'|Tail]) :- 
+	getMacPen(Tail).
+getTooNearHard([Head|Tail]) :-
+	nl, nl, write('getTooNearHard'), nl, write(Tail),
 	sub_atom(Head, 1, 3, After, Sub),
 	sub_atom(Sub, 0, 1, AfterFirst, SubFirst),
+	nl, write(SubFirst),
 	sub_atom(Sub, 2, 1, AfterSecond, SubSecond),
+	nl, write(SubSecond),
+	assertz(too_near_hard(SubFirst, SubSecond)),
+	getTooNearHard(Tail).
+
+getForbidden([]).
+getForbidden(['too-near tasks:'|Tail]) :- 
+	getTooNearHard(Tail).
+getForbidden([Head|Tail]) :-
+	nl, nl, write('getForbidden'), nl, write(Tail),
+	sub_atom(Head, 1, 3, After, Sub),
+	sub_atom(Sub, 0, 1, AfterFirst, SubFirst),
+	nl, write(SubFirst),
+	sub_atom(Sub, 2, 1, AfterSecond, SubSecond),
+	nl, write(SubSecond),
+	assertz(forbidden(SubFirst, SubSecond)),
+	getForbidden(Tail).
+
+getForced([]).
+getForced(['forbidden machine:'|Tail]) :-
+	getForbidden(Tail).
+getForced([Head|Tail]) :-
+	nl, nl, write('getForced'), nl, write(Tail),
+	sub_atom(Head, 1, 3, After, Sub),
+	sub_atom(Sub, 0, 1, AfterFirst, SubFirst),
+	nl, write(SubFirst),
+	sub_atom(Sub, 2, 1, AfterSecond, SubSecond),
+	nl, write(SubSecond),
 	assertz(forced(SubFirst, SubSecond)),
 	getForced(Tail).
 	
-	
 parse_lines([]).
-parse_lines([Line|Tail]) :-
-	sub_atom(Line, Ind, Len, After, 'forced partial assignment:') -> (nl, nl, write(Tail), getForced(Tail))
-	; sub_atom(Line, Ind, Len, After, 'forbidden machine:') -> (nl, nl, write(Tail), getForbidden(Tail))
-	; sub_atom(Line, Ind, Len, After, 'too-near tasks:') -> (nl, nl, write(Tail), getTooNearHard(Tail))
-	; sub_atom(Line, Ind, Len, After, 'machine penalties:') -> (nl, nl, write(Tail), getMacPen(Tail, [])) 
-	; sub_atom(Line, Ind, Len, After, 'too-near penalities:') -> (nl, nl, write(Tail), getTooNearSoft(Tail)) 
-	; parse_lines(Tail).
-
+parse_lines(['forced partial assignment:'|Tail]) :-
+	getForced(Tail).
+parse_lines([Head|Tail]) :-
+	parse_lines(Tail).
 
 read_file(File) :-
         open(File, read, Stream),
