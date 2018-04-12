@@ -90,9 +90,41 @@ getTooNearHard([Head|Tail]) :-
 	   getTooNearHard(Tail))
 	).
 
+checkForbiddenForMachine(9).
+checkForbiddenForMachine(Machine) :-
+	% if the machine is forbidden to select any tasks
+	atom_number(MachineChar, Machine),
+	findall(Task, forbidden(MachineChar, Task), Result),
+	length(Result, Length),
+	
+	% if the Length is equal to 8, then throw an error.
+	(Length == 8
+	-> throw('invalidForbidden')
+	; (NextMachine is Machine + 1, 
+	   checkForbiddenForMachine(NextMachine)
+	  )
+	).
+
+checkForbiddenForTask([]).
+checkForbiddenForTask([Head|Tail]) :-
+	% if the Task is forbidden to get selected by any machine
+	findall(Machine, forbidden(Machine, Head), Result),
+	length(Result, Length),
+	
+	% if the Length is equal to 8, then throw an error.
+	(Length == 8
+	-> throw('invalidForbidden')
+	; checkForbiddenForMachine(Tail)
+	).
+	
 getForbidden([]).
 getForbidden(['too-near tasks:'|Tail]) :- 
-	getTooNearHard(Tail).
+    (current_predicate(forbidden/2)
+	-> (checkForbiddenForMachine(1),
+		checkForbiddenForTask(['A','B','C','D','E','F','G','H']),
+		getTooNearHard(Tail))
+	; getTooNearHard(Tail)
+	).
 getForbidden([Head|Tail]) :-
 	nl, nl, write('getForbidden'), nl, write(Tail),
 	sub_atom(Head, 1, 3, After, Sub),
