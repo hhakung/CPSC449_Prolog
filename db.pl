@@ -59,27 +59,24 @@ checkErrorsMacPen([Row|T]) :-
 		-> assert(invalidPenalty(1)))
 		),
 	checkErrorsMacPen(T).
-
-getMacPen([H|T], Penalties) :-
-	\+ sub_atom(H, _, 1, _, ':')	% if Head does not contain ':'
-	-> ( removeSpaces(H, Result), 
-		 append(Result, Penalties, Penalties),
-		 getMacPen(T, Penalties),
-		 \+ length(Penalties, 8) 
-		 -> assert(invalidPenalty(1)) 
-		 ; checkErrorsMacPen(Penalties)
-		).
+	
+add_tail([],X,[X]).
+add_tail([H|T],X,[H|L]):-add_tail(T,X,L).
 		
-getMacPen([]).
-getMacPen(['too-near penalities'|Tail]) :- !.
-getMacPen([Head|Tail]) :- 
+getMacPen([], _).
+getMacPen(['too-near penalities'|Tail], _) :- !.
+getMacPen([Row1|Tail], MacPen) :- 
 	nl, nl, write('getMacPen'), nl, write(Tail),
-	%%%%%%%%%% NEED TO CONVERT A LINE OF PENALTIES INTO A LIST
-	%%%%%%%%%% AND PUT THAT LIST INTO THE CORRESPONDING ROW IN A 2D LIST
+	atom_chars(Row1, RowPenalty),		% convert to single atoms list for row 1
+	delete(RowPenalty, ' ', NewRow),	% delete empty spaces for row 1
+	nl, write(NewRow),
+	add_tail(MacPen, NewRow, C),
+	getMacPen(Tail, C),
+	nl,nl,nl, write('Machine penalties 2D:'), nl, write(C).
 		
 getTooNearHard([]).
 getTooNearHard(['machine penalties:'|Tail]) :- 
-	getMacPen(Tail).
+	getMacPen(Tail, Result).
 getTooNearHard([Head|Tail]) :-
 	nl, nl, write('getTooNearHard'), nl, write(Tail),
 	sub_atom(Head, 1, 3, After, Sub),
@@ -152,3 +149,4 @@ checkCharAndReadRest(end_of_file,[],_) :- !.
 checkCharAndReadRest(Char,[Char|Chars],Stream) :-
 	get_code(Stream,NextChar),
 	checkCharAndReadRest(NextChar,Chars,Stream).
+	
