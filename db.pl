@@ -31,27 +31,6 @@ removeNotChar( X , Y ) :-
 	select(' ', Ys3, Ys4),
 	atom_chars( Y , Ys4).
 
-parseTooNearSoft([]) :- !.
-parseTooNearSoft([A,B,C|Tail]) :-
-	forall(
-		member(A, [A,B,C|Tail]),
-		((validTask(A), validTask(B), validPenalty(C)),
-		is_set([A,B,C|Tail])
-		-> assert(too_near_soft(A, B, C)),
-			parseTooNearSoft(Tail)
-			; assert(invalidTask(1)))
-	).
-
-getTooNearSoft([Head|Tail]) :-
-	\+ sub_atom(Head, _, 1, _, ':')	% if Head does not contain ':'
-	-> ( removeNotChar(Head, Result), 
-		 append(Result, List, List),
-		 getTooNearSoft(Tail),
-		 len(I, List),
-		 Length is I,
-		 (Length mod 2 is 0) -> assert(invalidTooNearSoft(1)) ; parseTooNearSoft(List)
-		).
-
 checkErrorsMacPen([Row|T]) :-
 	\+ length(Row, 8) -> assert(invalidPenalty(1))
 	; forall(
@@ -61,13 +40,27 @@ checkErrorsMacPen([Row|T]) :-
 		),
 	checkErrorsMacPen(T).
 	
+getTooNearSoft([]).
+getTooNearSoft([Head|Tail]) :-
+	nl, nl, write('getTooNearSoft'), nl, write(Tail),
+	sub_atom(Head, 1, 5, After, Sub),
+	sub_atom(Sub, 0, 1, AfterFirst, SubFirst),
+	nl, write(SubFirst),
+	sub_atom(Sub, 2, 1, AfterSecond, SubSecond),
+	nl, write(SubSecond),
+	sub_atom(Sub, 4, 1, AfterThird, SubThird),
+	nl, write(SubThird),
+	assertz(too_near_soft(SubFirst, SubSecond, SubThird)),
+	getTooNearSoft(Tail).
+	
 add_tail([],X,[X]).
 add_tail([H|T],X,[H|L]):-add_tail(T,X,L).
 		
 getMacPen([], _).
 getMacPen(['too-near penalities'|Tail], Res) :- 
 	assertz(getMachinePenalties(Res)),
-	nl,nl,nl, write('Machine penalties 2d: '),nl, write(Res).
+	nl, nl, write('Machine penalties 2d: '), nl, write(Res),
+	getTooNearSoft(Tail).
 getMacPen([Row1|Tail], MacPen) :- 
 	nl, nl, write('getMacPen'), nl, write(Tail),
 	atom_chars(Row1, RowPenalty),		% convert to single atoms list for row 1
