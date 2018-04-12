@@ -64,15 +64,15 @@ add_tail([],X,[X]).
 add_tail([H|T],X,[H|L]):-add_tail(T,X,L).
 		
 getMacPen([], _).
-getMacPen(['too-near penalities'|Tail], _) :- !.
+getMacPen(['too-near penalities'|Tail], Res) :- 
+	nl,nl,nl, write('Machine penalties 2d: '),nl, write(Res).
 getMacPen([Row1|Tail], MacPen) :- 
 	nl, nl, write('getMacPen'), nl, write(Tail),
 	atom_chars(Row1, RowPenalty),		% convert to single atoms list for row 1
 	delete(RowPenalty, ' ', NewRow),	% delete empty spaces for row 1
 	nl, write(NewRow),
 	add_tail(MacPen, NewRow, C),
-	getMacPen(Tail, C),
-	nl,nl,nl, write('Machine penalties 2D:'), nl, write(C).
+	getMacPen(Tail, C).
 		
 getTooNearHard([]).
 getTooNearHard(['machine penalties:'|Tail]) :- 
