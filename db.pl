@@ -13,10 +13,10 @@ validPenalty(Num) :-
 	Num >= 0.
 	
 validMachine(A) :-
-	member(A, [1,2,3,4,5,6,7,8]).
+	member(A, ['1','2','3','4','5','6','7','8']).
 	
 validTask(T) :-
-	member(T, [A,B,C,D,E,F,G,H]).
+	member(T, ['A','B','C','D','E','F','G','H']).
 	
 % get length of list
 len(0, []).
@@ -50,8 +50,12 @@ getTooNearSoft([Head|Tail]) :-
 	nl, write(SubSecond),
 	sub_atom(Sub, 4, 1, AfterThird, SubThird),
 	nl, write(SubThird),
-	assertz(too_near_soft(SubFirst, SubSecond, SubThird)),
-	getTooNearSoft(Tail).
+	
+	( (\+ validTask(SubFirst) ; \+ validTask(SubSecond))
+	-> throw('invalidMachineOrTask')
+	; assertz(too_near_soft(SubFirst, SubSecond, SubThird)),
+	  getTooNearSoft(Tail)
+	).
 	
 add_tail([],X,[X]).
 add_tail([H|T],X,[H|L]):-add_tail(T,X,L).
@@ -80,15 +84,17 @@ getTooNearHard([Head|Tail]) :-
 	sub_atom(Sub, 2, 1, AfterSecond, SubSecond),
 	nl, write(SubSecond),
 	
-	% check if there exists the 'too_near_hard' predicate
-	(current_predicate(too_near_hard/2)
-	-> (too_near_hard(SubSecond, SubFirst) % check if there are constraints that are the reverse
-	   -> throw('invalidTooNear')
-	   ; (assertz(too_near_hard(SubFirst, SubSecond)),
+	( (\+ validTask(SubFirst) ; \+ validTask(SubSecond))
+	-> throw('invalidMachineOrTask')
+	; % check if there exists the 'too_near_hard' predicate
+	  (current_predicate(too_near_hard/2)
+	  -> (too_near_hard(SubSecond, SubFirst) % check if there are constraints that are the reverse
+	     -> throw('invalidTooNear')
+		 ; (assertz(too_near_hard(SubFirst, SubSecond)),
 	     getTooNearHard(Tail)))
-	; (assertz(too_near_hard(SubFirst, SubSecond)),
-	   getTooNearHard(Tail))
-	).
+	  ; (assertz(too_near_hard(SubFirst, SubSecond)),
+	     getTooNearHard(Tail))
+	) ).
 
 checkForbiddenForMachine(9).
 checkForbiddenForMachine(Machine) :-
@@ -103,7 +109,8 @@ checkForbiddenForMachine(Machine) :-
 	; (NextMachine is Machine + 1, 
 	   checkForbiddenForMachine(NextMachine)
 	  )
-	).
+	),
+	nl, nl, write('NextMachine is: '), write(NextMachine).
 
 checkForbiddenForTask([]).
 checkForbiddenForTask([Head|Tail]) :-
@@ -114,7 +121,7 @@ checkForbiddenForTask([Head|Tail]) :-
 	% if the Length is equal to 8, then throw an error.
 	(Length == 8
 	-> throw('invalidForbidden')
-	; checkForbiddenForMachine(Tail)
+	; checkForbiddenForTask(Tail)
 	).
 	
 getForbidden([]).
@@ -132,8 +139,12 @@ getForbidden([Head|Tail]) :-
 	nl, write(SubFirst),
 	sub_atom(Sub, 2, 1, AfterSecond, SubSecond),
 	nl, write(SubSecond),
-	assertz(forbidden(SubFirst, SubSecond)),
-	getForbidden(Tail).
+	
+	( (\+ validMachine(SubFirst) ; \+ validTask(SubSecond))
+	-> throw('invalidMachineOrTask')
+	; (assertz(forbidden(SubFirst, SubSecond)),
+	   getForbidden(Tail))
+	).
 
 getForced([]).
 getForced(['forbidden machine:'|Tail]) :-
@@ -146,15 +157,17 @@ getForced([Head|Tail]) :-
 	sub_atom(Sub, 2, 1, AfterSecond, SubSecond),
 	nl, write(SubSecond),
 	
-	% check if there exists the 'forced' predicate
-	(current_predicate(forced/2)
-	-> ((forced(X, SubSecond) ; forced(SubFirst, Y)) % check if there are duplicating assignments
-	   -> throw('partialAssignmentError')
-	   ; (assertz(forced(SubFirst, SubSecond)),
-	     getForced(Tail)))
-	; (assertz(forced(SubFirst, SubSecond)),
-	   getForced(Tail))
-	).
+	( (\+ validMachine(SubFirst) ; \+ validTask(SubSecond))
+	-> throw('invalidMachineOrTask')
+	; % check if there exists the 'forced' predicate
+	  (current_predicate(forced/2)
+	  -> ((forced(X, SubSecond) ; forced(SubFirst, Y)) % check if there are duplicating assignments
+	     -> throw('partialAssignmentError')
+		 ; (assertz(forced(SubFirst, SubSecond)),
+		 getForced(Tail)))
+	  ; (assertz(forced(SubFirst, SubSecond)),
+	     getForced(Tail))
+	  ) ).
 	
 parse_lines([]).
 parse_lines(['forced partial assignment:'|Tail]) :-
