@@ -79,8 +79,16 @@ getTooNearHard([Head|Tail]) :-
 	nl, write(SubFirst),
 	sub_atom(Sub, 2, 1, AfterSecond, SubSecond),
 	nl, write(SubSecond),
-	assertz(too_near_hard(SubFirst, SubSecond)),
-	getTooNearHard(Tail).
+	
+	% check if there exists the 'too_near_hard' predicate
+	(current_predicate(too_near_hard/2)
+	-> (too_near_hard(SubSecond, SubFirst) % check if there are constraints that are the reverse
+	   -> throw('invalidTooNear')
+	   ; (assertz(too_near_hard(SubFirst, SubSecond)),
+	     getTooNearHard(Tail)))
+	; (assertz(too_near_hard(SubFirst, SubSecond)),
+	   getTooNearHard(Tail))
+	).
 
 getForbidden([]).
 getForbidden(['too-near tasks:'|Tail]) :- 
@@ -105,8 +113,16 @@ getForced([Head|Tail]) :-
 	nl, write(SubFirst),
 	sub_atom(Sub, 2, 1, AfterSecond, SubSecond),
 	nl, write(SubSecond),
-	assertz(forced(SubFirst, SubSecond)),
-	getForced(Tail).
+	
+	% check if there exists the 'forced' predicate
+	(current_predicate(forced/2)
+	-> ((forced(X, SubSecond) ; forced(SubFirst, Y)) % check if there are duplicating assignments
+	   -> throw('partialAssignmentError')
+	   ; (assertz(forced(SubFirst, SubSecond)),
+	     getForced(Tail)))
+	; (assertz(forced(SubFirst, SubSecond)),
+	   getForced(Tail))
+	).
 	
 parse_lines([]).
 parse_lines(['forced partial assignment:'|Tail]) :-
@@ -115,8 +131,9 @@ parse_lines([Head|Tail]) :-
 	parse_lines(Tail).
 
 read_file(File) :-
-        open(File, read, Stream),
-        read_lines(Stream, Lines),
+        catch(open(File, read, InStream), E, (write('Could not open the input file.'), fail)),
+        catch(open('output.txt', write, OutStream), E, (write('Could not open the output file.'), fail)),
+		read_lines(InStream, Lines),
 		
 		% remove empty strings from the list
 		delete(Lines, '', NewLines1),
@@ -124,24 +141,23 @@ read_file(File) :-
 		
 		write(NewLines2),
 		parse_lines(NewLines2),
-        close(Stream).
+        close(InStream).
 		
-read_lines(Stream, []) :-
-	at_end_of_stream(Stream).
-		
- read_lines(Stream, [Head|Tail]) :-
- 	get_code(Stream, Char),
- 	checkCharAndReadRest(Char, Chars, Stream),
+read_lines(InStream, []) :-
+	at_end_of_stream(InStream).
+read_lines(InStream, [Head|Tail]) :-
+ 	get_code(InStream, Char),
+ 	checkCharAndReadRest(Char, Chars, InStream),
  	atom_codes(Head, Chars),
 	write(Head),
 	nl,
-	read_lines(Stream, Tail).
+	read_lines(InStream, Tail).
 	
-checkCharAndReadRest(10,[],_) :- !.
-checkCharAndReadRest(-1,[],_) :- !.
-checkCharAndReadRest(end_of_file,[],_) :- !.
+checkCharAndReadRest(10, [], _) :- !.
+checkCharAndReadRest(-1, [], _) :- !.
+checkCharAndReadRest(end_of_file, [], _) :- !.
 
-checkCharAndReadRest(Char,[Char|Chars],Stream) :-
-	get_code(Stream,NextChar),
-	checkCharAndReadRest(NextChar,Chars,Stream).
+checkCharAndReadRest(Char, [Char|Chars], InStream) :-
+	get_code(InStream, NextChar),
+	checkCharAndReadRest(NextChar, Chars, InStream).
 	
