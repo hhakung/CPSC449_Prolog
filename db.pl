@@ -2,6 +2,7 @@ dynamic(forced/2).
 dynamic(forbidden/2).
 dynamic(too_near_hard/2).
 dynamic(too_near_soft/3).
+dynamic(getMachinePenalties/1).
 
 dynamic(invalidPenalty/1).
 dynamic(invalidForced/1).
@@ -65,6 +66,7 @@ add_tail([H|T],X,[H|L]):-add_tail(T,X,L).
 		
 getMacPen([], _).
 getMacPen(['too-near penalities'|Tail], Res) :- 
+	assertz(getMachinePenalties(Res)),
 	nl,nl,nl, write('Machine penalties 2d: '),nl, write(Res).
 getMacPen([Row1|Tail], MacPen) :- 
 	nl, nl, write('getMacPen'), nl, write(Tail),
