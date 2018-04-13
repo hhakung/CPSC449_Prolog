@@ -22,23 +22,15 @@ validTask(T) :-
 len(0, []).
 len(L+l, [_|T]) :- len(L, T).
 
-% Remove '(', ')', ',' in atom	
-removeNotChar( X , Y ) :-
-	atom_chars( X , Xs ) ,
-	select( '(', Xs , Ys ),
-	select(')', Ys, Ys2),
-	select(',', Ys2, Ys3),
-	select(' ', Ys3, Ys4),
-	atom_chars( Y , Ys4).
-
-checkErrorsMacPen([Row|T]) :-
-	\+ length(Row, 8) -> assert(invalidPenalty(1))
-	; forall(
-		(\+ (member(Elem, Row),
-		validPenalty(Elem)) 
-		-> assert(invalidPenalty(1)))
-		),
-	checkErrorsMacPen(T).
+write_to_file(File, Msg) :-
+	atom_string(Msg, MessageStr),
+	open(File,write,Stream), 
+    write(Stream,MessageStr),  nl(Stream), 
+    close(Stream),
+	abort.
+	
+handleErr(Msg) :-
+	write_to_file('output.txt', Msg).
 	
 getTooNearSoft([]).
 getTooNearSoft([Head|Tail]) :-
@@ -50,16 +42,24 @@ getTooNearSoft([Head|Tail]) :-
 	nl, write(SubSecond),
 	sub_atom(Sub, 4, 1, AfterThird, SubThird),
 	nl, write(SubThird),
-	
-	( (\+ validTask(SubFirst) ; \+ validTask(SubSecond))
-	-> throw('invalidTask')
-	; % check if the SubThird is an integer
-	  (atom_to_term(SubThird, Term, Bindings),
-	   (\+ integer(Term)
-	   -> throw('invalidPenalty')
-	   ; (assertz(too_near_soft(SubFirst, SubSecond, SubThird)),
-	   getTooNearSoft(Tail)))
-	) ).
+	catch(
+		( (\+ validTask(SubFirst) ; \+ validTask(SubSecond))
+		-> throw('invalidTask')
+		; % check if the SubThird is an integer
+		catch(
+			(atom_to_term(SubThird, Term, Bindings),
+			(\+ integer(Term)
+			-> throw('invalidPenalty')
+			; (assertz(too_near_soft(SubFirst, SubSecond, SubThird)),
+			getTooNearSoft(Tail)))
+			),
+			'invalidPenalty',
+			handleErr('invalidPenalty')
+			)
+		),
+		'invalidTask',
+		handleErr('invalidTask')
+	).
 	
 add_tail([],X,[X]).
 add_tail([H|T],X,[H|L]):-add_tail(T,X,L).
@@ -67,9 +67,13 @@ add_tail([H|T],X,[H|L]):-add_tail(T,X,L).
 checkColLength([]).
 checkColLength([Head|Tail]) :-
 	length(Head, ColLength),
-	(\+ ColLength == 8
-	-> throw('machinePenaltyError')
-	; checkColLength(Tail)).
+	catch(
+		(\+ ColLength == 8
+		-> throw('machinePenaltyError')
+		; checkColLength(Tail)),
+		'machinePenaltyError',
+		handleErr('machinePenaltyError')
+	).
 
 stringListToAtomList(OTail, [], NewL, MacPen) :-
 	nl, write(NewL),
@@ -80,20 +84,28 @@ stringListToAtomList(OTail, [Head|Tail], NewList, MacPen) :-
 	
 	% check if the AtomResult is an integer
 	atom_to_term(AtomResult, Term, Bindings),
-	(\+ integer(Term)
-	-> throw('invalidPenalty')
-	; (add_tail(NewList, AtomResult, C),
-	   stringListToAtomList(OTail, Tail, C, MacPen))).
+	catch(
+		(\+ integer(Term)
+		-> throw('invalidPenalty')
+		; (add_tail(NewList, AtomResult, C),
+		stringListToAtomList(OTail, Tail, C, MacPen))),
+		'invalidPenalty',
+		handleErr('invalidPenalty')
+	).
 		
 getMacPen([], _).
 getMacPen(['too-near penalities'|Tail], Res) :- 
 	assertz(getMachinePenalties(Res)),
 	nl, nl, write('Machine penalties 2d: '), nl, write(Res),
 	length(Res, RowLength),
-	(\+ RowLength == 8
-	-> throw('machinePenaltyError')
-	; (checkColLength(Res),
-	   getTooNearSoft(Tail))).
+	catch(
+		(\+ RowLength == 8
+		-> throw('machinePenaltyError')
+		; (checkColLength(Res),
+		getTooNearSoft(Tail))),
+		'machinePenaltyError',
+		handleErr('machinePenaltyError')
+	).
 getMacPen([Row1|Tail], MacPen) :- 
 	nl, nl, write('getMacPen'), nl, write(Tail),
 	atom_string(Row1, S),
@@ -110,18 +122,26 @@ getTooNearHard([Head|Tail]) :-
 	nl, write(SubFirst),
 	sub_atom(Sub, 2, 1, AfterSecond, SubSecond),
 	nl, write(SubSecond),
-	
-	( (\+ validTask(SubFirst) ; \+ validTask(SubSecond))
-	-> throw('invalidMachineOrTask')
-	; % check if there exists the 'too_near_hard' predicate
-	  (current_predicate(too_near_hard/2)
-	  -> (too_near_hard(SubSecond, SubFirst) % check if there are constraints that are the reverse
-	     -> throw('invalidTooNear')
-		 ; (assertz(too_near_hard(SubFirst, SubSecond)),
-	     getTooNearHard(Tail)))
-	  ; (assertz(too_near_hard(SubFirst, SubSecond)),
-	     getTooNearHard(Tail))
-	) ).
+	catch(
+		( (\+ validTask(SubFirst) ; \+ validTask(SubSecond))
+		-> throw('invalidMachineOrTask')
+		; % check if there exists the 'too_near_hard' predicate
+			catch(
+				(current_predicate(too_near_hard/2)
+				-> (too_near_hard(SubSecond, SubFirst) % check if there are constraints that are the reverse
+				-> throw('invalidTooNear')
+				; (assertz(too_near_hard(SubFirst, SubSecond)),
+				getTooNearHard(Tail)))
+				; (assertz(too_near_hard(SubFirst, SubSecond)),
+				getTooNearHard(Tail)),
+				'invalidTooNear',
+				handleErr('invalidTooNear')
+				) 
+			)
+		),
+		'invalidMachineOrTask',
+		handleErr('invalidMachineOrTask')
+	).
 
 checkForbiddenForMachine(9).
 checkForbiddenForMachine(Machine) :-
@@ -131,11 +151,14 @@ checkForbiddenForMachine(Machine) :-
 	length(Result, Length),
 	
 	% if the Length is equal to 8, then throw an error.
-	(Length == 8
-	-> throw('invalidForbidden')
-	; (NextMachine is Machine + 1, 
-	   checkForbiddenForMachine(NextMachine)
-	  )
+	catch(
+		(Length == 8
+		-> throw('invalidForbidden')
+		; (NextMachine is Machine + 1, 
+		checkForbiddenForMachine(NextMachine))
+		),
+		'invalidForbidden',
+		handleErr('invalidForbidden')
 	),
 	nl, nl, write('NextMachine is: '), write(NextMachine).
 
@@ -146,9 +169,13 @@ checkForbiddenForTask([Head|Tail]) :-
 	length(Result, Length),
 	
 	% if the Length is equal to 8, then throw an error.
-	(Length == 8
-	-> throw('invalidForbidden')
-	; checkForbiddenForTask(Tail)
+	catch(
+		(Length == 8
+		-> throw('invalidForbidden')
+		; checkForbiddenForTask(Tail)
+		),
+		'invalidForbidden',
+		handleErr('invalidForbidden')
 	).
 	
 getForbidden([]).
@@ -166,11 +193,14 @@ getForbidden([Head|Tail]) :-
 	nl, write(SubFirst),
 	sub_atom(Sub, 2, 1, AfterSecond, SubSecond),
 	nl, write(SubSecond),
-	
-	( (\+ validMachine(SubFirst) ; \+ validTask(SubSecond))
-	-> throw('invalidMachineOrTask')
-	; (assertz(forbidden(SubFirst, SubSecond)),
-	   getForbidden(Tail))
+	catch(
+		( (\+ validMachine(SubFirst) ; \+ validTask(SubSecond))
+		-> throw('invalidMachineOrTask')
+		; (assertz(forbidden(SubFirst, SubSecond)),
+		getForbidden(Tail))
+		),
+		'invalidMachineOrTask',
+		handleErr('invalidMachineOrTask')
 	).
 
 getForced([]).
@@ -183,18 +213,26 @@ getForced([Head|Tail]) :-
 	nl, write(SubFirst),
 	sub_atom(Sub, 2, 1, AfterSecond, SubSecond),
 	nl, write(SubSecond),
-	
-	( (\+ validMachine(SubFirst) ; \+ validTask(SubSecond))
-	-> throw('invalidMachineOrTask')
-	; % check if there exists the 'forced' predicate
-	  (current_predicate(forced/2)
-	  -> ((forced(X, SubSecond) ; forced(SubFirst, Y)) % check if there are duplicating assignments
-	     -> throw('partialAssignmentError')
-		 ; (assertz(forced(SubFirst, SubSecond)),
-		 getForced(Tail)))
-	  ; (assertz(forced(SubFirst, SubSecond)),
-	     getForced(Tail))
-	  ) ).
+	catch(
+		( (\+ validMachine(SubFirst) ; \+ validTask(SubSecond))
+		-> throw('invalidMachineOrTask')
+		; % check if there exists the 'forced' predicate
+			catch(
+				(current_predicate(forced/2)
+				-> ((forced(X, SubSecond) ; forced(SubFirst, Y)) % check if there are duplicating assignments
+				-> throw('partialAssignmentError')
+				; (assertz(forced(SubFirst, SubSecond)),
+				getForced(Tail)))
+				; (assertz(forced(SubFirst, SubSecond)),
+				getForced(Tail))
+				),
+				'partialAssignmentError',
+				handleErr('partialAssignmentError')
+			)
+		),
+		'invalidMachineOrTask',
+		handleErr('invalidMachineOrTask')
+	).
 	
 parse_lines([]).
 parse_lines(['forced partial assignment:'|Tail]) :-
@@ -227,6 +265,7 @@ read_lines(InStream, [Head|Tail]) :-
 	
 checkCharAndReadRest(10, [], _) :- !.
 checkCharAndReadRest(-1, [], _) :- !.
+
 checkCharAndReadRest(end_of_file, [], _) :- !.
 
 checkCharAndReadRest(Char, [Char|Chars], InStream) :-
