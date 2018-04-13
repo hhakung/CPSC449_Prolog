@@ -151,19 +151,17 @@ minLowerBound(Array, Index) :- min_list(Array, X), getIndex(X, Array, Index).
 
 checkSol(ASol, 7) :-
    nth0(7, ASol, Task),
-   \+ forbidden('7', Task),
    (forced('7', X) ->
    X == Task;
    true),
    nth0(7, ASol, Element1),
    nth0(0, ASol, Element2),
    \+ hardTooNear(Element1, Element2).
-   
+
 checkSol(ASol, Index) :-
    NextIndex is Index + 1,
    nth0(Index, ASol, Task),
    atom_number(Mach, Index),
-   \+ forbidden(Mach, Task),
    (forced(Mach, X) ->
    X == Task;
    true),
@@ -171,9 +169,9 @@ checkSol(ASol, Index) :-
    nth0(NextIndex, ASol, Element2),
    \+ hardTooNear(Element1, Element2),
    checkSol(ASol, NextIndex).
-   
-   
-   
+
+
+
 
 
 filter([], FilteredC, FilteredC).
@@ -185,32 +183,27 @@ filter([H|T], List, FilteredC) :-
     filter(T, NewList, FilteredC);
     filter(T, List, FilteredC)).
 
-
-filter2([], FilteredC, FilteredC).
-filter2([H|T], List, FilteredC) :-
-     nth0(0, H, Task),
-     (('A' == Task)->
-     filter2(T, List, FilteredC);
-     append(List, [H], NewList),
-     filter2(T, NewList, FIlteredC)).
-
-
-
-
-%findall(X, (permutation(['A','B','C','D','E','F', 'G', 'H'],X),
-%	    nth0(0, X, A),
-%	    nth0(1, X, B),
-%	    nth0(2, X, C),
-%	    nth0(3, X, D),
-%	    nth0(4, X, E),
-%	    nth0(5, X, F),
-%	    nth0(6, X, G),
-%	    nth0(7, X, H)), Combinations).
-
-    
 getValidCombo(Combinations) :-
-    findall(X, permutation(['A','B','C','D','E','F','G','H'], X), Combinations),
-    
+    findall(X, (permutation(['A','B','C','D','E','F', 'G', 'H'],X),
+           nth0(0, X, A),
+           \+ forbidden('0',A),
+           nth0(1, X, B),
+           \+ forbidden('1',B),
+           nth0(2, X, C),
+           \+ forbidden('2',C),
+           nth0(3, X, D),
+           \+ forbidden('3',D),
+           nth0(4, X, E),
+           \+ forbidden('4',E),
+           nth0(5, X, F),
+           \+ forbidden('5',F),
+           nth0(6, X, G),
+           \+ forbidden('6',G),
+           forced('6',G),
+           nth0(7, X, H),
+           \+ forbidden('7',H)),
+           Combinations),
+
     length(Combinations, X),
     write(X),
     filter(Combinations, [], FilteredC),
