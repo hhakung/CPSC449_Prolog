@@ -11,15 +11,10 @@ getMachinePenalties([[1,2,1,4,5,6,7,8],[2,1,5,5,6,7,8,9],[1,2,5,6,7,8,9,10],
 
 forbidden('-1', 'A').
 %forbidden('1', 'A').
-%forbidden('0', 'B').
+forbidden('0', 'B').
 
 forced('-1','A').
-forced('2','C').
-forced('1', 'B').
-forced('3','D').
-forced('4', 'E').
-forced('5', 'F').
-forced('6', 'G').
+forced('0', 'A').
 
 hardTooNear('Z','Z').
 hardTooNear('A','B').
@@ -147,16 +142,11 @@ findSol(Sol) :-
 minLowerBound(Array, Index) :- min_list(Array, X), getIndex(X, Array, Index).
 
 %new get combinations
-----------------------------------------------------------------
-
 checkSol(ASol, 7) :-
    nth0(7, ASol, Task),
    (forced('7', X) ->
    X == Task;
-   true),
-   nth0(7, ASol, Element1),
-   nth0(0, ASol, Element2),
-   \+ hardTooNear(Element1, Element2).
+   true).
 
 checkSol(ASol, Index) :-
    NextIndex is Index + 1,
@@ -165,9 +155,6 @@ checkSol(ASol, Index) :-
    (forced(Mach, X) ->
    X == Task;
    true),
-   nth0(Index, ASol, Element1),
-   nth0(NextIndex, ASol, Element2),
-   \+ hardTooNear(Element1, Element2),
    checkSol(ASol, NextIndex).
 
 
@@ -187,26 +174,39 @@ getValidCombo(Combinations) :-
     findall(X, (permutation(['A','B','C','D','E','F', 'G', 'H'],X),
            nth0(0, X, A),
            \+ forbidden('0',A),
+	   forced('0', A);\+forced('0',Anything),
            nth0(1, X, B),
            \+ forbidden('1',B),
+	   forced('1', B);\+forced('1',Anything),
            nth0(2, X, C),
            \+ forbidden('2',C),
+	   forced('2', C);\+forced('2',Anything),
            nth0(3, X, D),
            \+ forbidden('3',D),
+	   forced('3', D);\+forced('3',Anything),
            nth0(4, X, E),
            \+ forbidden('4',E),
+	   forced('4', E);\+forced('4',Anything),
            nth0(5, X, F),
            \+ forbidden('5',F),
+	   forced('5', F);\+forced('5',Anything),
            nth0(6, X, G),
            \+ forbidden('6',G),
-           forced('6',G),
+	   forced('6', G);\+forced('6',Anything),
            nth0(7, X, H),
-           \+ forbidden('7',H)),
+           \+ forbidden('7',H),
+	   forced('7', H);\+forced('7',Anything),
+	   \+ hardTooNear(A,B),
+	   \+ hardTooNear(B,C),
+	   \+ hardTooNear(C,D),
+	   \+ hardTooNear(D,E),
+	   \+ hardTooNear(E,F),
+	   \+ hardTooNear(F,G),
+	   \+ hardTooNear(G,H),
+	   \+ hardTooNear(H,A)),
            Combinations),
 
-    length(Combinations, X),
-    write(X),
-    filter(Combinations, [], FilteredC),
+    %filter(Combinations, [], FilteredC),
     !.
 
 
