@@ -4,9 +4,6 @@ dynamic(too_near_hard/2).
 dynamic(too_near_soft/3).
 dynamic(getMachinePenalties/1).
 
-dynamic(invalidPenalty/1).
-dynamic(invalidForced/1).
-
 	
 validPenalty(Num) :-
 	integer(Num),
@@ -75,20 +72,21 @@ checkColLength([Head|Tail]) :-
 		handleErr('machine penalty error')
 	).
 
-stringListToAtomList(OTail, [], NewL, MacPen) :-
+stringListToNumList(OTail, [], NewL, MacPen) :-
 	nl, write(NewL),
 	add_tail(MacPen, NewL, C),
 	getMacPen(OTail, C).
-stringListToAtomList(OTail, [Head|Tail], NewList, MacPen) :-
+stringListToNumList(OTail, [Head|Tail], NewList, MacPen) :-
 	atom_string(AtomResult, Head),
+	atom_number(AtomResult, NumberResult),
 	
 	% check if the AtomResult is an integer
 	atom_to_term(AtomResult, Term, Bindings),
 	catch(
 		(\+ integer(Term)
 		-> throw('invalidPenalty')
-		; (add_tail(NewList, AtomResult, C),
-		stringListToAtomList(OTail, Tail, C, MacPen))),
+		; (add_tail(NewList, NumberResult, C),
+		stringListToNumList(OTail, Tail, C, MacPen))),
 		'invalidPenalty',
 		handleErr('invalid penalty')
 	).
@@ -111,7 +109,7 @@ getMacPen([Row1|Tail], MacPen) :-
 	atom_string(Row1, S),
 	split_string(S, " ", "", Res),
 	delete(Res, "", TrimmedRes),
-	stringListToAtomList(Tail, TrimmedRes, AtomList, MacPen).
+	stringListToNumList(Tail, TrimmedRes, NumList, MacPen).
 		
 getTooNearHard([]).
 getTooNearHard(['machine penalties:'|Tail]) :- 
