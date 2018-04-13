@@ -1,26 +1,26 @@
 % Author:
 % Date: 4/12/2018
-:-include('db.pl').
+:-[db].
 
 dynamic(isValidTasks/1).
 dynamic(penaltySum/1).
 
-getMachinePenalties([[1,2,1,4,5,6,7,8],[2,1,5,5,6,7,8,9],[1,2,5,6,7,8,9,10],
-                   [4,5,6,7,8,9,10,11],[5,6,7,8,9,10,11,12],[6,7,8,9,10,11,12,13],
-                   [7,8,9,10,11,12,13,14],[8,9,10,11,12,13,14,15]]).
+%getMachinePenalties([[1,2,1,4,5,6,7,8],[2,1,5,5,6,7,8,9],[1,2,5,6,7,8,9,10],
+ %                  [4,5,6,7,8,9,10,11],[5,6,7,8,9,10,11,12],[6,7,8,9,10,11,12,13],
+  %                 [7,8,9,10,11,12,13,14],[8,9,10,11,12,13,14,15]]).
 
 
-forbidden('-1', 'A').
+%forbidden('-1', 'A').
 %forbidden('1', 'A').
-forbidden('0', 'B').
+%forbidden('0', 'B').
 
-forced('-1','A').
-forced('0', 'A').
+%forced('-1','A').
+%forced('0', 'A').
 
-hardTooNear('Z','Z').
-hardTooNear('A','B').
+%hardTooNear('Z','Z').
+%hardTooNear('A','B').
 
-softTooNear('A','C', 10).
+%softTooNear('A','C', 10).
 
 % Get element with index (x, y) from machine penalties array
 getElement(X, Y, Element) :- getMachinePenalties(Array),
@@ -113,15 +113,19 @@ getPenalty(Solution, Value):-
     getElement(5, T6, C6),
     getElement(6, T7, C7),
     getElement(7, T8, C8),
-    too_near_soft(T1,T2,S1),
-    too_near_soft(T2,T3,S2),
-    too_near_soft(T3,T4,S3),
-    too_near_soft(T4,T5,S4),
-    too_near_soft(T5,T6,S5),
-    too_near_soft(T6,T7,S6),
-    too_near_soft(T7,T8,S7),
-    too_near_soft(T8,T1,S8),
-    Value is C1 + C2 + C3 + C4 + C5 + C6 + C7 + C8 + S1 + S2 + S3 + S4 + S5 +S6 + S7 + S8.
+    Value is 0,
+    (current_predicate(too_near_soft/3)->
+	 ((too_near_soft(T1,T2,S1)-> Value is Value + S1;S1 is 0),
+	  (too_near_soft(T2,T3,S2)-> Value is Value + S2;S2 is 0),
+	  (too_near_soft(T3,T4,S3)-> Value is Value + S3;S3 is 0),
+	  (too_near_soft(T4,T5,S4)-> Value is Value + S4;S4 is 0),
+	  (too_near_soft(T5,T6,S5)-> Value is Value + S5;S5 is 0),
+	  (too_near_soft(T6,T7,S6)-> Value is Value + S6;S6 is 0),
+	  (too_near_soft(T7,T8,S7)-> Value is Value + S7;S7 is 0),
+	  (too_near_soft(T8,T1,S8)-> Value is Value + S8;S8 is 0),
+	  Value is C1 + C2 + C3 + C4 + C5 + C6 + C7 + C8 + S1 + S2 + S3 + S4 + S5 +S6 + S7 + S8);
+     Value is C1 + C2 + C3 + C4 + C5 + C6 + C7 + C8).
+
 
 
 calcPenalty([]).
