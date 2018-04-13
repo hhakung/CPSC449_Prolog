@@ -98,7 +98,8 @@ getMacPen([Row1|Tail], MacPen) :-
 	nl, nl, write('getMacPen'), nl, write(Tail),
 	atom_string(Row1, S),
 	split_string(S, " ", "", Res),
-	stringListToAtomList(Tail, Res, AtomList, MacPen).
+	delete(Res, "", TrimmedRes),
+	stringListToAtomList(Tail, TrimmedRes, AtomList, MacPen).
 		
 getTooNearHard([]).
 getTooNearHard(['machine penalties:'|Tail]) :- 
@@ -227,6 +228,8 @@ read_lines(InStream, [Head|Tail]) :-
 	
 checkCharAndReadRest(10, [], _) :- !.
 checkCharAndReadRest(-1, [], _) :- !.
+checkCharAndReadRest(35, [], _) :- 
+	throw('garbage').
 checkCharAndReadRest(end_of_file, [], _) :- !.
 
 checkCharAndReadRest(Char, [Char|Chars], InStream) :-
