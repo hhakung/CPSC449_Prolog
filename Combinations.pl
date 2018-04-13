@@ -181,39 +181,58 @@ filter([H|T], List, FilteredC) :-
 getValidCombo(Combinations) :-
     findall(X, (permutation(['A','B','C','D','E','F', 'G', 'H'],X),
            nth0(0, X, A),
-           \+ forbidden('0',A),
-	   (forced('0', A);\+forced('0',Anything)),
+           
+	   
            nth0(1, X, B),
-           \+ forbidden('1',B),
-	   (forced('1', B);\+forced('1',Anything)),
+           
+	   
            nth0(2, X, C),
-           \+ forbidden('2',C),
-	   (forced('2', C);\+forced('2',Anything)),
+           
+	   
            nth0(3, X, D),
-           \+ forbidden('3',D),
-	   (forced('3', D);\+forced('3',Anything)),
+           
+	   
            nth0(4, X, E),
-           \+ forbidden('4',E),
-	   (forced('4', E);\+forced('4',Anything)),
+           
+	   
            nth0(5, X, F),
-           \+ forbidden('5',F),
-	   (forced('5', F);\+forced('5',Anything)),
+           
+	   
            nth0(6, X, G),
-           \+ forbidden('6',G),
-	   (forced('6', G);\+forced('6',Anything)),
+           
+	   
            nth0(7, X, H),
-           \+ forbidden('7',H),
-	   (forced('7', H);\+forced('7',Anything)),
-	   \+ too_near_hard(A,B),
-	   \+ too_near_hard(B,C),
-	   \+ too_near_hard(C,D),
-	   \+ too_near_hard(D,E),
-	   \+ too_near_hard(E,F),
-	   \+ too_near_hard(F,G),
-	   \+ too_near_hard(G,H),
-	   \+ too_near_hard(H,A)),
-           Combinations),
+           
 
+	   (current_predicate(forced/2)->
+		(forced('1', A);\+forced('1',Anything)),
+		(forced('2', B);\+forced('2',Anything)),
+		(forced('3', C);\+forced('3',Anything)),
+		(forced('4', D);\+forced('4',Anything)),
+		(forced('5', E);\+forced('5',Anything)),
+		(forced('6', F);\+forced('6',Anything)),
+		(forced('7', G);\+forced('7',Anything)),
+		(forced('8', H);\+forced('8',Anything));true),
+	   (current_predicate(forbidden/2)->
+		(\+ forbidden('1',A)),
+		(\+ forbidden('2',B)),
+		(\+ forbidden('3',C)),
+		(\+ forbidden('4',D)),
+		(\+ forbidden('5',E)),
+		(\+ forbidden('6',F)),
+		(\+ forbidden('7',G)),
+		(\+ forbidden('8',H));true),
+	   (current_predicate(too_near_hard/2)->
+		(\+ too_near_hard(A,B)),
+		(\+ too_near_hard(B,C)),
+		(\+ too_near_hard(C,D)),
+		(\+ too_near_hard(D,E)),
+		(\+ too_near_hard(E,F)),
+		(\+ too_near_hard(F,G)),
+		(\+ too_near_hard(G,H)),
+		(\+ too_near_hard(H,A));true)),
+            Combinations),
+    
     %filter(Combinations, [], FilteredC),
     !.
 
