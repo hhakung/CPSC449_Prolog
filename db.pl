@@ -65,6 +65,16 @@ checkColLength([Head|Tail]) :-
 	(\+ ColLength == 8
 	-> throw('machinePenaltyError')
 	; checkColLength(Tail)).
+	
+stringListToAtomList([], _, _, _).
+stringListToAtomList(OTail, [], NewL, MacPen) :-
+	nl, write(NewL),
+	add_tail(MacPen, NewL, C),
+	getMacPen(OTail, C).
+stringListToAtomList(OTail, [Head|Tail], NewList, MacPen) :-
+	atom_string(AtomResult, Head),
+	add_tail(NewList, AtomResult, C),
+	stringListToAtomList(OTail, Tail, C, MacPen).
 		
 getMacPen([], _).
 getMacPen(['too-near penalities'|Tail], Res) :- 
@@ -77,11 +87,9 @@ getMacPen(['too-near penalities'|Tail], Res) :-
 	   getTooNearSoft(Tail))).
 getMacPen([Row1|Tail], MacPen) :- 
 	nl, nl, write('getMacPen'), nl, write(Tail),
-	atom_chars(Row1, RowPenalty),		% convert to single atoms list for row 1
-	delete(RowPenalty, ' ', NewRow),	% delete empty spaces for row 1
-	nl, write(NewRow),
-	add_tail(MacPen, NewRow, C),
-	getMacPen(Tail, C).
+	atom_string(Row1, S),
+	split_string(S, " ", "", Res),
+	stringListToAtomList(Tail, Res, AtomList, MacPen).
 		
 getTooNearHard([]).
 getTooNearHard(['machine penalties:'|Tail]) :- 
