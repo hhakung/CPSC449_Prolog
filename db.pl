@@ -54,11 +54,11 @@ getTooNearSoft([Head|Tail]) :-
 			getTooNearSoft(Tail)))
 			),
 			'invalidPenalty',
-			handleErr('invalidPenalty')
+			handleErr('invalid penalty')
 			)
 		),
 		'invalidTask',
-		handleErr('invalidTask')
+		handleErr('invalid task')
 	).
 	
 add_tail([],X,[X]).
@@ -72,7 +72,7 @@ checkColLength([Head|Tail]) :-
 		-> throw('machinePenaltyError')
 		; checkColLength(Tail)),
 		'machinePenaltyError',
-		handleErr('machinePenaltyError')
+		handleErr('machine penalty error')
 	).
 
 stringListToAtomList(OTail, [], NewL, MacPen) :-
@@ -90,7 +90,7 @@ stringListToAtomList(OTail, [Head|Tail], NewList, MacPen) :-
 		; (add_tail(NewList, AtomResult, C),
 		stringListToAtomList(OTail, Tail, C, MacPen))),
 		'invalidPenalty',
-		handleErr('invalidPenalty')
+		handleErr('invalid penalty')
 	).
 		
 getMacPen([], _).
@@ -104,7 +104,7 @@ getMacPen(['too-near penalities'|Tail], Res) :-
 		; (checkColLength(Res),
 		getTooNearSoft(Tail))),
 		'machinePenaltyError',
-		handleErr('machinePenaltyError')
+		handleErr('machine penalty error')
 	).
 getMacPen([Row1|Tail], MacPen) :- 
 	nl, nl, write('getMacPen'), nl, write(Tail),
@@ -132,7 +132,7 @@ getTooNearHard([Head|Tail]) :-
 			getTooNearHard(Tail))
 		),
 		'invalidMachineOrTask',
-		handleErr('invalidMachineOrTask')
+		handleErr('invalid machine/task')
 	).
 
 checkForbiddenForMachine(9).
@@ -150,7 +150,7 @@ checkForbiddenForMachine(Machine) :-
 		checkForbiddenForMachine(NextMachine))
 		),
 		'invalidForbidden',
-		handleErr('invalidForbidden')
+		handleErr('No valid solution possible!')
 	),
 	nl, nl, write('NextMachine is: '), write(NextMachine).
 
@@ -167,7 +167,7 @@ checkForbiddenForTask([Head|Tail]) :-
 		; checkForbiddenForTask(Tail)
 		),
 		'invalidForbidden',
-		handleErr('invalidForbidden')
+		handleErr('No valid solution possible!')
 	).
 	
 getForbidden([]).
@@ -192,7 +192,7 @@ getForbidden([Head|Tail]) :-
 		getForbidden(Tail))
 		),
 		'invalidMachineOrTask',
-		handleErr('invalidMachineOrTask')
+		handleErr('invalid machine/task')
 	).
 
 getForced([]).
@@ -219,11 +219,11 @@ getForced([Head|Tail]) :-
 				getForced(Tail))
 				),
 				'partialAssignmentError',
-				handleErr('partialAssignmentError')
+				handleErr('partial assignment error')
 			)
 		),
 		'invalidMachineOrTask',
-		handleErr('invalidMachineOrTask')
+		handleErr('invalid machine/task')
 	).
 	
 parse_lines([]).
@@ -258,7 +258,7 @@ read_lines(InStream, [Head|Tail]) :-
 checkCharAndReadRest(10, [], _) :- !.
 checkCharAndReadRest(-1, [], _) :- !.
 checkCharAndReadRest(35, [], _) :- 
-	throw('garbage').
+	handleErr('Error while parsing input file').
 checkCharAndReadRest(end_of_file, [], _) :- !.
 
 checkCharAndReadRest(Char, [Char|Chars], InStream) :-
