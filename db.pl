@@ -22,7 +22,7 @@ len(L+l, [_|T]) :- len(L, T).
 write_to_file(File, Msg) :-
 	atom_string(Msg, MessageStr),
 	open(File,write,Stream), 
-    write(Stream,MessageStr),  nl(Stream), 
+    write(Stream,MessageStr), 
     close(Stream),
 	halt.
 	
@@ -231,9 +231,8 @@ parse_lines(['forced partial assignment:'|Tail]) :-
 parse_lines([Head|Tail]) :-
 	parse_lines(Tail).
 
-read_file(File, File2) :-
+read_file(File) :-
         catch(open(File, read, InStream), E, (write('Could not open the input file.'), fail)),
-        catch(open(File2, write, OutStream), E, (write('Could not open the output file.'), fail)),
 		read_lines(InStream, Lines),
 		
 		% remove empty strings from the list
