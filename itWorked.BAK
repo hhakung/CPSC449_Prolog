@@ -26,7 +26,6 @@ forced('7','H').
 
 hardTooNear('Z','Z').
 %hardTooNear('A','B').
-
 softTooNear('Z','Z',-1).
 softTooNear('A','C', 10).
 
