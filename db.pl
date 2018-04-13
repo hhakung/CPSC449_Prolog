@@ -59,12 +59,22 @@ getTooNearSoft([Head|Tail]) :-
 	
 add_tail([],X,[X]).
 add_tail([H|T],X,[H|L]):-add_tail(T,X,L).
+
+checkColLength([Head|Tail]) :-
+	length(Head, ColLength),
+	(\+ ColLength == 8
+	-> throw('machinePenaltyError')
+	; checkColLength(Tail)).
 		
 getMacPen([], _).
 getMacPen(['too-near penalities'|Tail], Res) :- 
 	assertz(getMachinePenalties(Res)),
 	nl, nl, write('Machine penalties 2d: '), nl, write(Res),
-	getTooNearSoft(Tail).
+	length(Res, RowLength),
+	(\+ RowLength == 8
+	-> throw('machinePenaltyError')
+	; (checkColLength(Res),
+	   getTooNearSoft(Tail))).
 getMacPen([Row1|Tail], MacPen) :- 
 	nl, nl, write('getMacPen'), nl, write(Tail),
 	atom_chars(Row1, RowPenalty),		% convert to single atoms list for row 1
