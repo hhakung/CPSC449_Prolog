@@ -47,7 +47,8 @@ getTooNearSoft([Head|Tail]) :-
 			(atom_to_term(SubThird, Term, Bindings),
 			(\+ integer(Term)
 			-> throw('invalidPenalty')
-			; (assertz(too_near_soft(SubFirst, SubSecond, SubThird)),
+			; (atom_number(SubThird, SubThirdNum),
+			assertz(too_near_soft(SubFirst, SubSecond, SubThirdNum)),
 			getTooNearSoft(Tail)))
 			),
 			'invalidPenalty',
