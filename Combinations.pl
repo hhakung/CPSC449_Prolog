@@ -148,28 +148,47 @@ minLowerBound(Array, Index) :- min_list(Array, X), getIndex(X, Array, Index).
 
 %new get combinations
 ----------------------------------------------------------------
-% checking if valid solution 
-checkSol(ASol, 7) :-
+checkSol(ASol, 4) :-
+   nth0(4, ASol, Task),
+   \+ forbidden('4', Task),
+   (forced('4', X) ->
+   X == Task;
+   true),
+   nth0(4, ASol, Element1),
+   nth0(0, ASol, Element2),
+   \+ hardTooNear(Element1, Element2).
 
 checkSol(ASol, Index) :-
    NextIndex is Index + 1,
-   
+   nth0(Index, ASol, Task),
+   atom_number(Mach, Index),
+   \+ forbidden(Mach, Task),
+   (forced(Mach, X) ->
+   X == Task;
+   true),
+   nth0(Index, ASol, Element1),
+   nth0(NextIndex, ASol, Element2),
+   \+ hardTooNear(Element1, Element2),
+   checkSol(ASol, NextIndex).
 
 
-% filtering out invalid solutions
-filter([], FilteredC, FIlteredC).
 
 
-filter(H|T, List, FilteredC) :-
-    checkSol(H, 0) ->
+
+filter([], FilteredC, FilteredC).
+
+
+filter([H|T], List, FilteredC) :-
+    (checkSol(H, 0) ->
     append(List, [H], NewList);
-    NewList is List,
+    filter(T, List, FilteredC)),
     filter(T, NewList, FilteredC).
 
 
-getValidCombo(Combinations) :-
-    findall(X, permutation(['A','B','C','D','E','F','G','H'], X), Combinations),
-    filter(Combinations, [], FilteredC).
+getValidCombo(FilteredC) :-
+    findall(X, permutation(['A','B','C','D','E'], X), Combinations),
+    filter(Combinations, [], FilteredC),
+    !.
 
 
 
