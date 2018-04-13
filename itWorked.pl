@@ -15,10 +15,14 @@ forbidden('-1', 'A').
 %forbidden('0', 'B').
 
 forced('-1','A').
-%forced('0',X).
-%forced('0', 'G').
-%forced('5', 'F').
-%forced('6', 'G').
+forced('0','A').
+forced('0','B').
+forced('2','C').
+forced('3','D').
+forced('4','E').
+forced('5','F').
+forced('6','G').
+forced('7','H').
 
 hardTooNear('Z','Z').
 %hardTooNear('A','B').
@@ -208,7 +212,7 @@ filter([H|T], List, FilteredC) :-
     filter(T, NewList, FilteredC);
     filter(T, List, FilteredC)).
 
-getValidCombo(Sol) :-
+getValidCombo(List, Sol) :-
     findall(X, (permutation(['A','B','C','D','E','F', 'G', 'H'],X),
            nth0(0, X, A),
            \+ forbidden('0',A),
@@ -236,7 +240,8 @@ getValidCombo(Sol) :-
     !,
     last(LowBounds, MinLB),
     last(LastIsSol, SolTasks),
-    append(SolTasks, MinLB, Sol).
+    append(List, SolTasks, NewList),
+    append(NewList, [MinLB], Sol).
 
 
 % Write to the outputFile
