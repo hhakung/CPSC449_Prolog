@@ -231,9 +231,9 @@ parse_lines(['forced partial assignment:'|Tail]) :-
 parse_lines([Head|Tail]) :-
 	parse_lines(Tail).
 
-read_file(File) :-
+read_file(File, File2) :-
         catch(open(File, read, InStream), E, (write('Could not open the input file.'), fail)),
-        catch(open('output.txt', write, OutStream), E, (write('Could not open the output file.'), fail)),
+        catch(open(File2, write, OutStream), E, (write('Could not open the output file.'), fail)),
 		read_lines(InStream, Lines),
 		
 		% remove empty strings from the list
