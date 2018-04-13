@@ -114,15 +114,9 @@ getTooNearHard([Head|Tail]) :-
 	
 	( (\+ validTask(SubFirst) ; \+ validTask(SubSecond))
 	-> throw('invalidMachineOrTask')
-	; % check if there exists the 'too_near_hard' predicate
-	  (current_predicate(too_near_hard/2)
-	  -> (too_near_hard(SubSecond, SubFirst) % check if there are constraints that are the reverse
-	     -> throw('invalidTooNear')
-		 ; (assertz(too_near_hard(SubFirst, SubSecond)),
-	     getTooNearHard(Tail)))
-	  ; (assertz(too_near_hard(SubFirst, SubSecond)),
-	     getTooNearHard(Tail))
-	) ).
+	; (assertz(too_near_hard(SubFirst, SubSecond)),
+	   getTooNearHard(Tail))
+	).
 
 checkForbiddenForMachine(9).
 checkForbiddenForMachine(Machine) :-
