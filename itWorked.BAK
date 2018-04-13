@@ -15,14 +15,18 @@ forbidden('-1', 'A').
 %forbidden('0', 'B').
 
 forced('-1','A').
-%forced('0',X).
-%forced('0', 'G').
-%forced('5', 'F').
-%forced('6', 'G').
+forced('0','A').
+forced('0','B').
+forced('2','C').
+forced('3','D').
+forced('4','E').
+forced('5','F').
+forced('6','G').
+forced('7','H').
 
 hardTooNear('Z','Z').
 %hardTooNear('A','B').
-
+softTooNear('Z','Z',-1).
 softTooNear('A','C', 10).
 
 % Get element with index (x, y) from machine penalties array
@@ -208,7 +212,7 @@ filter([H|T], List, FilteredC) :-
     filter(T, NewList, FilteredC);
     filter(T, List, FilteredC)).
 
-getValidCombo(Sol) :-
+getValidCombo(List, Sol) :-
     findall(X, (permutation(['A','B','C','D','E','F', 'G', 'H'],X),
            nth0(0, X, A),
            \+ forbidden('0',A),
@@ -236,6 +240,25 @@ getValidCombo(Sol) :-
     !,
     last(LowBounds, MinLB),
     last(LastIsSol, SolTasks),
-    append(SolTasks, MinLB, Sol).
+    append(List, SolTasks, NewList),
+    append(NewList, [MinLB], Sol).
 
 
+% Write to the outputFile
+% Works as main
+main(InputFile, OutputFile) :-
+                open(OutputFile, write, File),
+                (getValidCombo([], Sol) ->
+                write(File, 'Solution '),
+                nth0(0, Sol, Sol1), write(File, Sol1), write(File, ' '),
+                nth0(1, Sol, Sol2), write(File, Sol2), write(File, ' '),
+                nth0(2, Sol, Sol3), write(File, Sol3), write(File, ' '),
+                nth0(3, Sol, Sol4), write(File, Sol4), write(File, ' '),
+                nth0(4, Sol, Sol5), write(File, Sol5), write(File, ' '),
+                nth0(5, Sol, Sol6), write(File, Sol6), write(File, ' '),
+                nth0(6, Sol, Sol7), write(File, Sol7), write(File, ' '),
+                nth0(7, Sol, Sol8), write(File, Sol8), write(File, '; '),
+                write(File, 'Quality: '),
+                nth0(8, Sol, Penalty), write(File, Penalty);
+                write(File, 'No valid solution possible!')),
+                close(File).

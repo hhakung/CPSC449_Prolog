@@ -27,6 +27,7 @@ forced('7','H').
 hardTooNear('Z','Z').
 %hardTooNear('A','B').
 
+softTooNear('Z','Z',-1).
 softTooNear('A','C', 10).
 
 % Get element with index (x, y) from machine penalties array
