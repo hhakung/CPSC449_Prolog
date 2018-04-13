@@ -24,7 +24,7 @@ write_to_file(File, Msg) :-
 	open(File,write,Stream), 
     write(Stream,MessageStr),  nl(Stream), 
     close(Stream),
-	abort.
+	halt.
 	
 handleErr(Msg) :-
 	write_to_file('output.txt', Msg).

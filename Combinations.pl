@@ -140,8 +140,13 @@ main(InputFile,OutputFile):-
     min_list(Penalties, Minimum),
     nth0(Index, Penalties, Minimum),
     nth0(Index, Solutions, Solution),
-	nl, nl, write(Minimum),
-	nl, nl, write(Solution).
+    open(OutputFile,write,Stream), nl(Stream),
+    write(Stream,"Solution "),
+    write(Stream,Solution),
+    write(Stream, "; Quality:"),
+    write(Stream,Minimum),
+    close(Stream),
+	halt.
     
 
     
