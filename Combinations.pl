@@ -113,40 +113,36 @@ getPenalty(Solution, Value):-
     getElement(5, T6, C6),
     getElement(6, T7, C7),
     getElement(7, T8, C8),
-    Value is 0,
     (current_predicate(too_near_soft/3)->
-	 ((too_near_soft(T1,T2,S1)-> Value is Value + S1;S1 is 0),
-	  (too_near_soft(T2,T3,S2)-> Value is Value + S2;S2 is 0),
-	  (too_near_soft(T3,T4,S3)-> Value is Value + S3;S3 is 0),
-	  (too_near_soft(T4,T5,S4)-> Value is Value + S4;S4 is 0),
-	  (too_near_soft(T5,T6,S5)-> Value is Value + S5;S5 is 0),
-	  (too_near_soft(T6,T7,S6)-> Value is Value + S6;S6 is 0),
-	  (too_near_soft(T7,T8,S7)-> Value is Value + S7;S7 is 0),
-	  (too_near_soft(T8,T1,S8)-> Value is Value + S8;S8 is 0),
-	  Value is C1 + C2 + C3 + C4 + C5 + C6 + C7 + C8 + S1 + S2 + S3 + S4 + S5 +S6 + S7 + S8);
-     Value is C1 + C2 + C3 + C4 + C5 + C6 + C7 + C8).
+	 ((too_near_soft(T1,T2,S1)->S1 is S1;S1 is 0),
+	  (too_near_soft(T2,T3,S2)->S2 is S2;S2 is 0),
+	  (too_near_soft(T3,T4,S3)->S3 is S3;S3 is 0),
+	  (too_near_soft(T4,T5,S4)->S4 is S4;S4 is 0),
+	  (too_near_soft(T5,T6,S5)->S5 is S5;S5 is 0),
+	  (too_near_soft(T6,T7,S6)->S6 is S6;S6 is 0),
+	  (too_near_soft(T7,T8,S7)->S7 is S7;S7 is 0),
+	  (too_near_soft(T8,T1,S8)->S8 is S8;S8 is 0),
+	  Value is  C1 + C2 + C3 + C4 + C5 + C6 + C7 + C8 + S1 + S2 + S3 + S4 + S5 + S6 + S7 + S8);
+    Value is C1 + C2 + C3 + C4 + C5 + C6 + C7 + C8).
 
 
 
 calcPenalty([]).
 
 calcPenalty(Solutions, Penalties) :-
-    forall(member(X,Solutions),
-	   (getPenalty(X, Penalty),
-	    write(Pentalty),
-	    append(Penalties, Penalty, Penalties))).
+    findall(Penalty, (member(X,Solutions), getPenalty(X, Penalty)),Penalties).
 
-findSol(Sol) :-
-    retractall(isValidTasks),
-    retractall(penaltySum),
-    getCombination('-1', ['A','B','C','D','E','F','G','H'], [], []),
-    findall(X, isValidTasks(X), ComboArray),
-    calcPenalty(ComboArray),
-    findall(Y, penaltySum(Y), PenaltyArray),
-    !,
-    minLowerBound(PenaltyArray, Index),
-    nth0(Index, ComboArray, Sol),
-    !.
+
+main(InputFile,OutputFile):-
+    read_file(Inputfile),
+    getValidCombo(Solutions),
+    calcPenalty(Solutions, Penalties),
+    min_list(Penalties, Minimum),
+    nth0(Index, Penalties, Minimum),
+    nth0(Index, Solutions, Solution),
+    writeln(Minimum),
+    writeln(Solution).
+    
 
     
 % Get the index of element (first element if there are more than one) with lowest value
