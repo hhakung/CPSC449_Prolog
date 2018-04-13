@@ -52,10 +52,14 @@ getTooNearSoft([Head|Tail]) :-
 	nl, write(SubThird),
 	
 	( (\+ validTask(SubFirst) ; \+ validTask(SubSecond))
-	-> throw('invalidMachineOrTask')
-	; assertz(too_near_soft(SubFirst, SubSecond, SubThird)),
-	  getTooNearSoft(Tail)
-	).
+	-> throw('invalidTask')
+	; % check if the SubThird is an integer
+	  (atom_to_term(SubThird, Term, Bindings),
+	   (\+ integer(Term)
+	   -> throw('invalidPenalty')
+	   ; (assertz(too_near_soft(SubFirst, SubSecond, SubThird)),
+	   getTooNearSoft(Tail)))
+	) ).
 	
 add_tail([],X,[X]).
 add_tail([H|T],X,[H|L]):-add_tail(T,X,L).
@@ -73,8 +77,13 @@ stringListToAtomList(OTail, [], NewL, MacPen) :-
 	getMacPen(OTail, C).
 stringListToAtomList(OTail, [Head|Tail], NewList, MacPen) :-
 	atom_string(AtomResult, Head),
-	add_tail(NewList, AtomResult, C),
-	stringListToAtomList(OTail, Tail, C, MacPen).
+	
+	% check if the AtomResult is an integer
+	atom_to_term(AtomResult, Term, Bindings),
+	(\+ integer(Term)
+	-> throw('invalidPenalty')
+	; (add_tail(NewList, AtomResult, C),
+	   stringListToAtomList(OTail, Tail, C, MacPen))).
 		
 getMacPen([], _).
 getMacPen(['too-near penalities'|Tail], Res) :- 
