@@ -45,17 +45,17 @@ addPenalty(Tasks, Index, Penalty, Min, TotalPenalty) :-
     addPenalty(Tasks, NextIndex, AddPenalty, Min, TotalPenalty);
     TotalPenalty is inf).
 
-calc([], LowBounds, Min, LowBounds).
+calc([], LowBounds, LastIsSol, Min, LowBounds, LastIsSol).
 
-calc([H|T], List, Min, LowBounds) :-
+calc([H|T], List, ListT, Min, LowBounds, LastIsSol) :-
      addPenalty(H, 0, 0, Min, PenaltySum),
      (PenaltySum @< Min ->
      NewMin is PenaltySum,
      append(List, [PenaltySum], NewList),
-     calc(T, NewList, NewMin, LowBounds);
-     calc(T, List, Min, LowBounds)).
-
-
+     append(ListT, [H], NewListT),
+     calc(T, NewList, NewListT, NewMin, LowBounds, LastIsSol);
+     calc(T, List, ListT, Min, LowBounds, LastIsSol)).
+     
 filter([], FilteredC, FilteredC).
 
 
@@ -65,7 +65,7 @@ filter([H|T], List, FilteredC) :-
     filter(T, NewList, FilteredC);
     filter(T, List, FilteredC)).
 
-getValidCombo(LowBounds) :-
+getValidCombo(LowBounds, LastIsSol) :-
     findall(X, (permutation(['A','B','C','D','E','F', 'G', 'H'],X),
            nth0(0, X, A),
            \+ forbidden('0',A),
@@ -89,6 +89,8 @@ getValidCombo(LowBounds) :-
     write(X),
     filter(Combinations, [], FilteredC),
     !,
-    calc(FilteredC, [], inf, LowBounds),
+    calc(FilteredC, [], [], inf, LowBounds, LastIsSol),
     !.
+
+
 
