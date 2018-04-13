@@ -1,32 +1,37 @@
 % Author:
 % Date: 4/12/2018
-:-include('db.pl').
 
 dynamic(isValidTasks/1).
 dynamic(penaltySum/1).
 
-getMachinePenalties([[1,2,1,4,5,6,7,8],[2,1,5,5,6,7,8,9],[1,2,5,6,7,8,9,10],
-                   [4,5,6,7,8,9,10,11],[5,6,7,8,9,10,11,12],[6,7,8,9,10,11,12,13],
-                   [7,8,9,10,11,12,13,14],[8,9,10,11,12,13,14,15]]).
+getMachinePenalties([[10,2,0,0,20,30,40,50],[2,1,5,5,6,7,8,9],[1,2,5,6,7,8,9,10],
+                   [4,5,6,7,8,9,10,11],[5,6,7,8,200,10,11,12],[70,7,40,9,10,20,12,100],
+                   [7,8,9,10,11,12,13,14],[100,60,10,50,40,30,14,0]]).
 
 
 forbidden('-1', 'A').
-%forbidden('1', 'A').
-forbidden('0', 'B').
+%forbidden('0', 'A').
+%forbidden('0', 'B').
+%forbidden('0', 'B').
 
 forced('-1','A').
-forced('0', 'A').
+forced('0','A').
+forced('0','B').
+forced('2','C').
+forced('3','D').
+forced('4','E').
+forced('5','F').
+forced('6','G').
+forced('7','H').
 
 hardTooNear('Z','Z').
-hardTooNear('A','B').
+%hardTooNear('A','B').
 
 softTooNear('A','C', 10).
 
 % Get element with index (x, y) from machine penalties array
-getElement(X, Y, Element) :- getMachinePenalties(Array),
-			     taskToInt(Y,Z),
-			     nth0(X, Array, Row),
-                             nth0(Z, Row, Element).
+getElement(X, Y, Element) :- getMachinePenalties(Array),nth0(X, Array, Row),
+                                    nth0(Y, Row, Element).
 
 % Get the index of given element in Array
 % Not catching exception yet (empty list)
@@ -96,42 +101,37 @@ isValid(Combination) :-
 
 % iterate through a list
 
-getPenalty(Solution, Value):-
-    nth0(0, Solution, T1),
-    nth0(1, Solution, T2),
-    nth0(2, Solution, T3),
-    nth0(3, Solution, T4),
-    nth0(4, Solution, T5),
-    nth0(5, Solution, T6),
-    nth0(6, Solution, T7),
-    nth0(7, Solution, T8),
-    getElement(0, T1, C1),
-    getElement(1, T2, C2),
-    getElement(2, T3, C3),
-    getElement(3, T4, C4),
-    getElement(4, T5, C5),
-    getElement(5, T6, C6),
-    getElement(6, T7, C7),
-    getElement(7, T8, C8),
-    too_near_soft(T1,T2,S1),
-    too_near_soft(T2,T3,S2),
-    too_near_soft(T3,T4,S3),
-    too_near_soft(T4,T5,S4),
-    too_near_soft(T5,T6,S5),
-    too_near_soft(T6,T7,S6),
-    too_near_soft(T7,T8,S7),
-    too_near_soft(T8,T1,S8),
-    Value is C1 + C2 + C3 + C4 + C5 + C6 + C7 + C8 + S1 + S2 + S3 + S4 + S5 +S6 + S7 + S8.
+getPenalty(Tasks, 7, Penalty, TotalPenalty) :-
+    nth0(7, Tasks, Task),
+    taskToInt(Task, IntTask),
+    getElement(7, IntTask, Num),
+    nth0(7, Tasks, Element1),
+    nth0(0, Tasks, Element2),
+    (softTooNear(Element1, Element2, SoftPenalty) ->
+    TotalPenalty is (Penalty + Num + SoftPenalty);
+    TotalPenalty is (Penalty + Num)).
 
+getPenalty(Tasks, Index, Penalty, TotalPenalty) :-
+    NextIndex is (Index + 1),
+    nth0(Index, Tasks, Task),
+    taskToInt(Task, IntTask),
+    getElement(Index, IntTask, Num),
+    nth0(Index, Tasks, Element1),
+    Next is Index + 1,
+    nth0(Next, Tasks, Element2),
+    (softTooNear(Element1, Element2, SoftPenalty)->
+    AddPenalty is (Penalty + Num + SoftPenalty),
+    getPenalty(Tasks, NextIndex, AddPenalty, TotalPenalty);
+    AddPenalty is (Penalty + Num),
+    getPenalty(Tasks, NextIndex, AddPenalty, TotalPenalty)).
 
 calcPenalty([]).
 
-calcPenalty(Solutions, Penalties) :-
-    forall(member(X,Solutions),
-	   (getPenalty(X, Penalty),
-	    write(Pentalty),
-	    append(Penalties, Penalty, Penalties))).
-
+calcPenalty([H|T]) :-
+    getPenalty(H, 0, 0, Penalty),
+    assertz(penaltySum(Penalty)),
+    calcPenalty(T).
+    
 findSol(Sol) :-
     retractall(isValidTasks),
     retractall(penaltySum),
@@ -149,12 +149,14 @@ findSol(Sol) :-
 % Not catching exception yet (empty list)
 minLowerBound(Array, Index) :- min_list(Array, X), getIndex(X, Array, Index).
 
-%new get combinations
 checkSol(ASol, 7) :-
    nth0(7, ASol, Task),
    (forced('7', X) ->
    X == Task;
-   true).
+   true),
+   nth0(7, ASol, Element1),
+   nth0(0, ASol, Element2),
+   \+ hardTooNear(Element1, Element2).
 
 checkSol(ASol, Index) :-
    NextIndex is Index + 1,
@@ -163,12 +165,44 @@ checkSol(ASol, Index) :-
    (forced(Mach, X) ->
    X == Task;
    true),
+   nth0(Index, ASol, Element1),
+   nth0(NextIndex, ASol, Element2),
+   \+ hardTooNear(Element1, Element2),
    checkSol(ASol, NextIndex).
 
+addPenalty(Tasks, 7, Penalty, Min, TotalPenalty) :-
+    nth0(7, Tasks, Element1),
+    taskToInt(Element1, IntTask),
+    getElement(7, IntTask, Num),
+    nth0(0, Tasks, Element2),
+    (softTooNear(Element1, Element2, SoftPenalty) ->
+    TotalPenalty is (Penalty + Num + SoftPenalty);
+    TotalPenalty is (Penalty + Num)).
+    
+addPenalty(Tasks, Index, Penalty, Min, TotalPenalty) :-
+ NextIndex is (Index + 1),
+    nth0(Index, Tasks, Element1),
+    taskToInt(Element1, IntTask),
+    getElement(Index, IntTask, Num),
+    nth0(NextIndex, Tasks, Element2),
+    (softTooNear(Element1, Element2, SoftPenalty)->
+    AddPenalty is (Penalty + Num + SoftPenalty);
+    AddPenalty is (Penalty + Num)),
+    (AddPenalty @< Min ->
+    addPenalty(Tasks, NextIndex, AddPenalty, Min, TotalPenalty);
+    TotalPenalty is inf).
 
+calc([], LowBounds, LastIsSol, Min, LowBounds, LastIsSol).
 
-
-
+calc([H|T], List, ListT, Min, LowBounds, LastIsSol) :-
+     addPenalty(H, 0, 0, Min, PenaltySum),
+     (PenaltySum @< Min ->
+     NewMin is PenaltySum,
+     append(List, [PenaltySum], NewList),
+     append(ListT, [H], NewListT),
+     calc(T, NewList, NewListT, NewMin, LowBounds, LastIsSol);
+     calc(T, List, ListT, Min, LowBounds, LastIsSol)).
+     
 filter([], FilteredC, FilteredC).
 
 
@@ -178,43 +212,35 @@ filter([H|T], List, FilteredC) :-
     filter(T, NewList, FilteredC);
     filter(T, List, FilteredC)).
 
-getValidCombo(Combinations) :-
+getValidCombo(List, Sol) :-
     findall(X, (permutation(['A','B','C','D','E','F', 'G', 'H'],X),
            nth0(0, X, A),
            \+ forbidden('0',A),
-	   forced('0', A);\+forced('0',Anything),
            nth0(1, X, B),
            \+ forbidden('1',B),
-	   forced('1', B);\+forced('1',Anything),
            nth0(2, X, C),
            \+ forbidden('2',C),
-	   forced('2', C);\+forced('2',Anything),
            nth0(3, X, D),
            \+ forbidden('3',D),
-	   forced('3', D);\+forced('3',Anything),
            nth0(4, X, E),
            \+ forbidden('4',E),
-	   forced('4', E);\+forced('4',Anything),
            nth0(5, X, F),
            \+ forbidden('5',F),
-	   forced('5', F);\+forced('5',Anything),
            nth0(6, X, G),
            \+ forbidden('6',G),
-	   forced('6', G);\+forced('6',Anything),
            nth0(7, X, H),
-           \+ forbidden('7',H),
-	   forced('7', H);\+forced('7',Anything),
-	   \+ hardTooNear(A,B),
-	   \+ hardTooNear(B,C),
-	   \+ hardTooNear(C,D),
-	   \+ hardTooNear(D,E),
-	   \+ hardTooNear(E,F),
-	   \+ hardTooNear(F,G),
-	   \+ hardTooNear(G,H),
-	   \+ hardTooNear(H,A)),
+           \+ forbidden('7',H)),
            Combinations),
 
-    %filter(Combinations, [], FilteredC),
-    !.
+    length(Combinations, X),
+    write(X),
+    filter(Combinations, [], FilteredC),
+    !,
+    calc(FilteredC, [], [], inf, LowBounds, LastIsSol),
+    !,
+    last(LowBounds, MinLB),
+    last(LastIsSol, SolTasks),
+    append(List, SolTasks, NewList),
+    append(NewList, [MinLB], Sol).
 
 
