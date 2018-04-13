@@ -60,13 +60,13 @@ getTooNearSoft([Head|Tail]) :-
 add_tail([],X,[X]).
 add_tail([H|T],X,[H|L]):-add_tail(T,X,L).
 
+checkColLength([]).
 checkColLength([Head|Tail]) :-
 	length(Head, ColLength),
 	(\+ ColLength == 8
 	-> throw('machinePenaltyError')
 	; checkColLength(Tail)).
-	
-stringListToAtomList([], _, _, _).
+
 stringListToAtomList(OTail, [], NewL, MacPen) :-
 	nl, write(NewL),
 	add_tail(MacPen, NewL, C),
