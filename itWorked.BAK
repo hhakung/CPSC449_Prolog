@@ -239,21 +239,3 @@ getValidCombo(Sol) :-
     append(SolTasks, MinLB, Sol).
 
 
-% Write to the outputFile
-% Works as main
-main(InputFile, OutputFile) :-
-                open(OutputFile, write, File),
-                (getValidCombo([], Sol) ->
-                write(File, 'Solution '),
-                nth0(0, Sol, Sol1), write(File, Sol1), write(File, ' '),
-                nth0(1, Sol, Sol2), write(File, Sol2), write(File, ' '),
-                nth0(2, Sol, Sol3), write(File, Sol3), write(File, ' '),
-                nth0(3, Sol, Sol4), write(File, Sol4), write(File, ' '),
-                nth0(4, Sol, Sol5), write(File, Sol5), write(File, ' '),
-                nth0(5, Sol, Sol6), write(File, Sol6), write(File, ' '),
-                nth0(6, Sol, Sol7), write(File, Sol7), write(File, ' '),
-                nth0(7, Sol, Sol8), write(File, Sol8), write(File, '; '),
-                write(File, 'Quality: '),
-                nth0(8, Sol, Penalty), write(File, Penalty);
-                write(File, 'No valid solution possible!')),
-                close(File).
