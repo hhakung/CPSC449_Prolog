@@ -146,4 +146,30 @@ findSol(Sol) :-
 % Not catching exception yet (empty list)
 minLowerBound(Array, Index) :- min_list(Array, X), getIndex(X, Array, Index).
 
+%new get combinations
+----------------------------------------------------------------
+% checking if valid solution 
+checkSol(ASol, 7) :-
+
+checkSol(ASol, Index) :-
+   NextIndex is Index + 1,
+   
+
+
+% filtering out invalid solutions
+filter([], FilteredC, FIlteredC).
+
+
+filter(H|T, List, FilteredC) :-
+    checkSol(H, 0) ->
+    append(List, [H], NewList);
+    NewList is List,
+    filter(T, NewList, FilteredC).
+
+
+getValidCombo(Combinations) :-
+    findall(X, permutation(['A','B','C','D','E','F','G','H'], X), Combinations),
+    filter(Combinations, [], FilteredC).
+
+
 
