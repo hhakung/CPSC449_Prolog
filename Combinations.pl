@@ -195,6 +195,19 @@ filter2([H|T], List, FilteredC) :-
      filter2(T, NewList, FIlteredC)).
 
 
+
+
+%findall(X, (permutation(['A','B','C','D','E','F', 'G', 'H'],X),
+%	    nth0(0, X, A),
+%	    nth0(1, X, B),
+%	    nth0(2, X, C),
+%	    nth0(3, X, D),
+%	    nth0(4, X, E),
+%	    nth0(5, X, F),
+%	    nth0(6, X, G),
+%	    nth0(7, X, H)), Combinations).
+
+    
 getValidCombo(Combinations) :-
     findall(X, permutation(['A','B','C','D','E','F','G','H'], X), Combinations),
     
