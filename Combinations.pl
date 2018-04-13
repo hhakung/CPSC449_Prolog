@@ -1,5 +1,6 @@
 % Author:
 % Date: 4/12/2018
+:-include('db.pl').
 
 dynamic(isValidTasks/1).
 dynamic(penaltySum/1).
@@ -22,8 +23,10 @@ hardTooNear('A','B').
 softTooNear('A','C', 10).
 
 % Get element with index (x, y) from machine penalties array
-getElement(X, Y, Element) :- getMachinePenalties(Array),nth0(X, Array, Row),
-                                    nth0(Y, Row, Element).
+getElement(X, Y, Element) :- getMachinePenalties(Array),
+			     taskToInt(Y,Z),
+			     nth0(X, Array, Row),
+                             nth0(Z, Row, Element).
 
 % Get the index of given element in Array
 % Not catching exception yet (empty list)
@@ -93,37 +96,42 @@ isValid(Combination) :-
 
 % iterate through a list
 
-getPenalty(Tasks, 7, Penalty, TotalPenalty) :-
-    nth0(7, Tasks, Task),
-    taskToInt(Task, IntTask),
-    getElement(7, IntTask, Num),
-    nth0(7, Tasks, Element1),
-    nth0(0, Tasks, Element2),
-    (softTooNear(Element1, Element2, SoftPenalty) ->
-    TotalPenalty is (Penalty + Num + SoftPenalty);
-    TotalPenalty is (Penalty + Num)).
+getPenalty(Solution, Value):-
+    nth0(0, Solution, T1),
+    nth0(1, Solution, T2),
+    nth0(2, Solution, T3),
+    nth0(3, Solution, T4),
+    nth0(4, Solution, T5),
+    nth0(5, Solution, T6),
+    nth0(6, Solution, T7),
+    nth0(7, Solution, T8),
+    getElement(0, T1, C1),
+    getElement(1, T2, C2),
+    getElement(2, T3, C3),
+    getElement(3, T4, C4),
+    getElement(4, T5, C5),
+    getElement(5, T6, C6),
+    getElement(6, T7, C7),
+    getElement(7, T8, C8),
+    too_near_soft(T1,T2,S1),
+    too_near_soft(T2,T3,S2),
+    too_near_soft(T3,T4,S3),
+    too_near_soft(T4,T5,S4),
+    too_near_soft(T5,T6,S5),
+    too_near_soft(T6,T7,S6),
+    too_near_soft(T7,T8,S7),
+    too_near_soft(T8,T1,S8),
+    Value is C1 + C2 + C3 + C4 + C5 + C6 + C7 + C8 + S1 + S2 + S3 + S4 + S5 +S6 + S7 + S8.
 
-getPenalty(Tasks, Index, Penalty, TotalPenalty) :-
-    NextIndex is (Index + 1),
-    nth0(Index, Tasks, Task),
-    taskToInt(Task, IntTask),
-    getElement(Index, IntTask, Num),
-    nth0(Index, Tasks, Element1),
-    Next is Index + 1,
-    nth0(Next, Tasks, Element2),
-    (softTooNear(Element1, Element2, SoftPenalty)->
-    AddPenalty is (Penalty + Num + SoftPenalty),
-    getPenalty(Tasks, NextIndex, AddPenalty, TotalPenalty);
-    AddPenalty is (Penalty + Num),
-    getPenalty(Tasks, NextIndex, AddPenalty, TotalPenalty)).
 
 calcPenalty([]).
 
-calcPenalty([H|T]) :-
-    getPenalty(H, 0, 0, Penalty),
-    assertz(penaltySum(Penalty)),
-    calcPenalty(T).
-    
+calcPenalty(Solutions, Penalties) :-
+    forall(member(X,Solutions),
+	   (getPenalty(X, Penalty),
+	    write(Pentalty),
+	    append(Penalties, Penalty, Penalties))).
+
 findSol(Sol) :-
     retractall(isValidTasks),
     retractall(penaltySum),
