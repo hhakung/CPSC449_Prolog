@@ -15,8 +15,12 @@
 - Jona Grageda – 10152577
 - Christilyn Arjona - 30033435
 
-# How to Run the Program:
-- Open up swipl (type "swipl") and consult Combinations.pl (type "consult('Combinations.pl')"), 
-  OR double click on the file, Combinations.pl.
-- Run the main predicate by typing the following: main('NameOfTheInputFile.txt').
-- The result is in the "output.txt" folder in the same directory as all the other files.
+# How to Run the Program (on cmd):
+- Open up cmd in the directory where 'myprog.exe' is located.
+- Type in the following command: myprog "theInputFileName.txt"
+- *** THE FILENAME SHOULD BE IN DOUBLE QUOTES FOR WINDOWS (CMD) ***
+
+# How to Run the Program (on Bash):
+- Open up bash in the directory where 'myprog.exe' is located.
+- Type in the following command: ./myprog 'theInputFileName.txt'
+- *** THE FILENAME SHOULD BE IN SINGLE QUOTES FOR LINUX (BASH) ***
