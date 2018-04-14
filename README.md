@@ -17,10 +17,8 @@
 
 # How to Run the Program (on cmd):
 - Open up cmd in the directory where 'myprog.exe' is located.
-- Type in the following command: myprog "theInputFileName.txt"
-- *** THE FILENAME SHOULD BE IN DOUBLE QUOTES FOR WINDOWS (CMD) ***
+- Type in the following command: myprog theInputFileName.txt
 
 # How to Run the Program (on Bash):
 - Open up bash in the directory where 'myprog.exe' is located.
-- Type in the following command: ./myprog 'theInputFileName.txt'
-- *** THE FILENAME SHOULD BE IN SINGLE QUOTES FOR LINUX (BASH) ***
+- Type in the following command: ./myprog theInputFileName.txt
