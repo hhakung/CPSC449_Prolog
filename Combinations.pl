@@ -52,7 +52,10 @@ calcPenalty([]).
 calcPenalty(Solutions, Penalties) :-
     findall(Penalty, (member(X,Solutions), getPenalty(X, Penalty)),Penalties).
 
-main(InputFile):-
+main :-
+	current_prolog_flag(argv, [Head|Tail]),
+	writeln(Tail),
+	atomic_list_concat(Tail, '', InputFile),
     read_file(InputFile),
     getValidCombo(Solutions),
     calcPenalty(Solutions, Penalties),
