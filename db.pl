@@ -20,17 +20,18 @@ len(0, []).
 len(L+l, [_|T]) :- len(L, T).
 
 write_to_file(File, Msg) :-
+	nl,nl, write(File),
 	atom_string(Msg, MessageStr),
 	open(File,write,Stream), 
     write(Stream,MessageStr), 
     close(Stream),
 	halt.
 	
-handleErr(Msg) :-
-	write_to_file('output.txt', Msg).
+handleErr(Msg, OutputFile) :-
+	write_to_file(OutputFile, Msg).
 	
-getTooNearSoft([]).
-getTooNearSoft([Head|Tail]) :-
+getTooNearSoft([], OutputFile).
+getTooNearSoft([Head|Tail], OutputFile) :-
 	nl, nl, write('getTooNearSoft'), nl, write(Tail),
 	sub_atom(Head, 1, 5, After, Sub),
 	sub_atom(Sub, 0, 1, AfterFirst, SubFirst),
@@ -49,35 +50,35 @@ getTooNearSoft([Head|Tail]) :-
 			-> throw('invalidPenalty')
 			; (atom_number(SubThird, SubThirdNum),
 			assertz(too_near_soft(SubFirst, SubSecond, SubThirdNum)),
-			getTooNearSoft(Tail)))
+			getTooNearSoft(Tail, OutputFile)))
 			),
 			'invalidPenalty',
-			handleErr('invalid penalty')
+			handleErr('invalid penalty', OutputFile)
 			)
 		),
 		'invalidTask',
-		handleErr('invalid task')
+		handleErr('invalid task', OutputFile)
 	).
 	
 add_tail([],X,[X]).
 add_tail([H|T],X,[H|L]):-add_tail(T,X,L).
 
-checkColLength([]).
-checkColLength([Head|Tail]) :-
+checkColLength([], _).
+checkColLength([Head|Tail], OutputFile) :-
 	length(Head, ColLength),
 	catch(
 		(\+ ColLength == 8
 		-> throw('machinePenaltyError')
-		; checkColLength(Tail)),
+		; checkColLength(Tail, OutputFile)),
 		'machinePenaltyError',
-		handleErr('machine penalty error')
+		handleErr('machine penalty error', OutputFile)
 	).
 
-stringListToNumList(OTail, [], NewL, MacPen) :-
+stringListToNumList(OTail, [], NewL, MacPen, OutputFile) :-
 	nl, write(NewL),
 	add_tail(MacPen, NewL, C),
-	getMacPen(OTail, C).
-stringListToNumList(OTail, [Head|Tail], NewList, MacPen) :-
+	getMacPen(OTail, C, OutputFile).
+stringListToNumList(OTail, [Head|Tail], NewList, MacPen, OutputFile) :-
 	atom_string(AtomResult, Head),
 	atom_number(AtomResult, NumberResult),
 	
@@ -87,35 +88,35 @@ stringListToNumList(OTail, [Head|Tail], NewList, MacPen) :-
 		(\+ integer(Term)
 		-> throw('invalidPenalty')
 		; (add_tail(NewList, NumberResult, C),
-		stringListToNumList(OTail, Tail, C, MacPen))),
+		stringListToNumList(OTail, Tail, C, MacPen, OutputFile))),
 		'invalidPenalty',
-		handleErr('invalid penalty')
+		handleErr('invalid penalty', OutputFile)
 	).
 		
-getMacPen([], _).
-getMacPen(['too-near penalities'|Tail], Res) :- 
+getMacPen([], _, _).
+getMacPen(['too-near penalities'|Tail], Res, OutputFile) :- 
 	assertz(getMachinePenalties(Res)),
 	nl, nl, write('Machine penalties 2d: '), nl, write(Res),
 	length(Res, RowLength),
 	catch(
 		(\+ RowLength == 8
 		-> throw('machinePenaltyError')
-		; (checkColLength(Res),
-		getTooNearSoft(Tail))),
+		; (checkColLength(Res, OutputFile),
+		getTooNearSoft(Tail, OutputFile))),
 		'machinePenaltyError',
-		handleErr('machine penalty error')
+		handleErr('machine penalty error', OutputFile)
 	).
-getMacPen([Row1|Tail], MacPen) :- 
+getMacPen([Row1|Tail], MacPen, OutputFile) :- 
 	nl, nl, write('getMacPen'), nl, write(Tail),
 	atom_string(Row1, S),
 	split_string(S, " ", "", Res),
 	delete(Res, "", TrimmedRes),
-	stringListToNumList(Tail, TrimmedRes, NumList, MacPen).
+	stringListToNumList(Tail, TrimmedRes, NumList, MacPen, OutputFile).
 		
-getTooNearHard([]).
-getTooNearHard(['machine penalties:'|Tail]) :- 
-	getMacPen(Tail, Result).
-getTooNearHard([Head|Tail]) :-
+getTooNearHard([], _).
+getTooNearHard(['machine penalties:'|Tail], OutputFile) :- 
+	getMacPen(Tail, Result, OutputFile).
+getTooNearHard([Head|Tail], OutputFile) :-
 	nl, nl, write('getTooNearHard'), nl, write(Tail),
 	sub_atom(Head, 1, 3, After, Sub),
 	sub_atom(Sub, 0, 1, AfterFirst, SubFirst),
@@ -128,14 +129,14 @@ getTooNearHard([Head|Tail]) :-
 		-> throw('invalidMachineOrTask')
 		; % check if there exists the 'too_near_hard' predicate
 			(assertz(too_near_hard(SubFirst, SubSecond)),
-			getTooNearHard(Tail))
+			getTooNearHard(Tail, OutputFile))
 		),
 		'invalidMachineOrTask',
-		handleErr('invalid machine/task')
+		handleErr('invalid machine/task', OutputFile)
 	).
 
-checkForbiddenForMachine(9).
-checkForbiddenForMachine(Machine) :-
+checkForbiddenForMachine(9, _).
+checkForbiddenForMachine(Machine, OutputFile) :-
 	% if the machine is forbidden to select any tasks
 	atom_number(MachineChar, Machine),
 	findall(Task, forbidden(MachineChar, Task), Result),
@@ -146,15 +147,15 @@ checkForbiddenForMachine(Machine) :-
 		(Length == 8
 		-> throw('invalidForbidden')
 		; (NextMachine is Machine + 1, 
-		checkForbiddenForMachine(NextMachine))
+		checkForbiddenForMachine(NextMachine, OutputFile))
 		),
 		'invalidForbidden',
-		handleErr('No valid solution possible!')
+		handleErr('No valid solution possible!', OutputFile)
 	),
 	nl, nl, write('NextMachine is: '), write(NextMachine).
 
-checkForbiddenForTask([]).
-checkForbiddenForTask([Head|Tail]) :-
+checkForbiddenForTask([], _).
+checkForbiddenForTask([Head|Tail], OutputFile) :-
 	% if the Task is forbidden to get selected by any machine
 	findall(Machine, forbidden(Machine, Head), Result),
 	length(Result, Length),
@@ -163,21 +164,21 @@ checkForbiddenForTask([Head|Tail]) :-
 	catch(
 		(Length == 8
 		-> throw('invalidForbidden')
-		; checkForbiddenForTask(Tail)
+		; checkForbiddenForTask(Tail, OutputFile)
 		),
 		'invalidForbidden',
-		handleErr('No valid solution possible!')
+		handleErr('No valid solution possible!', OutputFile)
 	).
 	
-getForbidden([]).
-getForbidden(['too-near tasks:'|Tail]) :- 
+getForbidden([], _).
+getForbidden(['too-near tasks:'|Tail], OutputFile) :- 
     (current_predicate(forbidden/2)
-	-> (checkForbiddenForMachine(1),
-		checkForbiddenForTask(['A','B','C','D','E','F','G','H']),
-		getTooNearHard(Tail))
-	; getTooNearHard(Tail)
+	-> (checkForbiddenForMachine(1, OutputFile),
+		checkForbiddenForTask(['A','B','C','D','E','F','G','H'], OutputFile),
+		getTooNearHard(Tail, OutputFile))
+	; getTooNearHard(Tail, OutputFile)
 	).
-getForbidden([Head|Tail]) :-
+getForbidden([Head|Tail], OutputFile) :-
 	nl, nl, write('getForbidden'), nl, write(Tail),
 	sub_atom(Head, 1, 3, After, Sub),
 	sub_atom(Sub, 0, 1, AfterFirst, SubFirst),
@@ -188,16 +189,16 @@ getForbidden([Head|Tail]) :-
 		( (\+ validMachine(SubFirst) ; \+ validTask(SubSecond))
 		-> throw('invalidMachineOrTask')
 		; (assertz(forbidden(SubFirst, SubSecond)),
-		getForbidden(Tail))
+		getForbidden(Tail, OutputFile))
 		),
 		'invalidMachineOrTask',
-		handleErr('invalid machine/task')
+		handleErr('invalid machine/task', OutputFile)
 	).
 
-getForced([]).
-getForced(['forbidden machine:'|Tail]) :-
-	getForbidden(Tail).
-getForced([Head|Tail]) :-
+getForced([], _).
+getForced(['forbidden machine:'|Tail], OutputFile) :-
+	getForbidden(Tail, OutputFile).
+getForced([Head|Tail], OutputFile) :-
 	nl, nl, write('getForced'), nl, write(Tail),
 	sub_atom(Head, 1, 3, After, Sub),
 	sub_atom(Sub, 0, 1, AfterFirst, SubFirst),
@@ -213,53 +214,54 @@ getForced([Head|Tail]) :-
 				-> ((forced(X, SubSecond) ; forced(SubFirst, Y)) % check if there are duplicating assignments
 				-> throw('partialAssignmentError')
 				; (assertz(forced(SubFirst, SubSecond)),
-				getForced(Tail)))
+				getForced(Tail, OutputFile)))
 				; (assertz(forced(SubFirst, SubSecond)),
-				getForced(Tail))
+				getForced(Tail, OutputFile))
 				),
 				'partialAssignmentError',
-				handleErr('partial assignment error')
+				handleErr('partial assignment error', OutputFile)
 			)
 		),
 		'invalidMachineOrTask',
-		handleErr('invalid machine/task')
+		handleErr('invalid machine/task', OutputFile)
 	).
 	
-parse_lines([]).
-parse_lines(['forced partial assignment:'|Tail]) :-
-	getForced(Tail).
-parse_lines([Head|Tail]) :-
-	parse_lines(Tail).
+parse_lines([], _).
+parse_lines(['forced partial assignment:'|Tail], OutputFile) :-
+	getForced(Tail, OutputFile).
+parse_lines([Head|Tail], OutputFile) :-
+	parse_lines(Tail, OutputFile).
 
-read_file(File) :-
+read_file(File, File2) :-
         catch(open(File, read, InStream), E, (write('Could not open the input file.'), fail)),
-		read_lines(InStream, Lines),
+		catch(open(File2, write, OutStream), E, (write('Could not open the input file.'), fail)),
+		read_lines(InStream, Lines, File2),
 		
 		% remove empty strings from the list
 		delete(Lines, '', NewLines1),
 		delete(NewLines1, ' ', NewLines2),
 		
 		write(NewLines2),
-		parse_lines(NewLines2),
+		parse_lines(NewLines2, File2),
         close(InStream).
 		
-read_lines(InStream, []) :-
+read_lines(InStream, [], _) :-
 	at_end_of_stream(InStream).
-read_lines(InStream, [Head|Tail]) :-
+read_lines(InStream, [Head|Tail], OutputFile) :-
  	get_code(InStream, Char),
- 	checkCharAndReadRest(Char, Chars, InStream),
+ 	checkCharAndReadRest(Char, Chars, InStream, OutputFile),
  	atom_codes(Head, Chars),
 	write(Head),
 	nl,
-	read_lines(InStream, Tail).
+	read_lines(InStream, Tail, OutputFile).
 	
-checkCharAndReadRest(10, [], _) :- !.
-checkCharAndReadRest(-1, [], _) :- !.
-checkCharAndReadRest(35, [], _) :- 
-	handleErr('Error while parsing input file').
-checkCharAndReadRest(end_of_file, [], _) :- !.
+checkCharAndReadRest(10, [], _, _) :- !.
+checkCharAndReadRest(-1, [], _, _) :- !.
+checkCharAndReadRest(35, [], _, OutputFile) :- 
+	handleErr('Error while parsing input file', OutputFile).
+checkCharAndReadRest(end_of_file, [], _, _) :- !.
 
-checkCharAndReadRest(Char, [Char|Chars], InStream) :-
+checkCharAndReadRest(Char, [Char|Chars], InStream, OutputFile) :-
 	get_code(InStream, NextChar),
-	checkCharAndReadRest(NextChar, Chars, InStream).
+	checkCharAndReadRest(NextChar, Chars, InStream, OutputFile).
 	

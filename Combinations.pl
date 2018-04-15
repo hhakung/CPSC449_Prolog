@@ -53,13 +53,16 @@ calcPenalty(Solutions, Penalties) :-
     findall(Penalty, (member(X,Solutions), getPenalty(X, Penalty)),Penalties).
 
 main :-
-	current_prolog_flag(argv, [Head|Tail]),
-	writeln(Tail),
-	atomic_list_concat(Tail, '', InputFile),
-    read_file(InputFile),
+	current_prolog_flag(argv, Argv),
+	writeln(Argv),
+	nth0(1, Argv, InputFile),
+	writeln(FirstArg),
+	nth0(2, Argv, OutputFile),
+	writeln(SecondArg),
+    read_file(InputFile, OutputFile),
     getValidCombo(Solutions),
     calcPenalty(Solutions, Penalties),
-	open('output.txt', write, Stream),
+	open(OutputFile, write, Stream),
 	length(Penalties, Length),
 	(Length == 0
 	-> write(Stream, "No valid solution possible!")
