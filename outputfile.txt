@@ -1,1 +1,1 @@
-Error while parsing input file
+machine penalty error

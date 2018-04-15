@@ -15,10 +15,13 @@
 - Jona Grageda – 10152577
 - Christilyn Arjona - 30033435
 
-# How to Run the Program (on cmd):
-- Open up cmd in the directory where 'myprog.exe' is located.
-- Type in the following command: myprog theInputFileName.txt
+# How to Compile the Program:
+- On cmd, move to the directory where the 'Combinations.pl' and 'db.pl' files are located.
+- Type in the following command to compile the files into an executable called 'myprog.exe':
+  swipl --goal=main --stand_alone=true -o myprog -c Combinations.pl
 
-# How to Run the Program (on Bash):
-- Open up bash in the directory where 'myprog.exe' is located.
-- Type in the following command: ./myprog theInputFileName.txt
+# How to Run the Executable:
+- On cmd, move to the directory where the 'myprog.exe' file is located.
+- Copy and paste the test input files into the same directory.
+- Type in the following command to run the executable:
+  myprog inputFileName.txt outputFileName.txt
