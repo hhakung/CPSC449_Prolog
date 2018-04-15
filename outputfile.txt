@@ -1,1 +1,1 @@
-Error while parsing input file
+Solution H G F E D C B A; Quality: 800
