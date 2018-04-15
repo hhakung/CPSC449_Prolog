@@ -54,11 +54,8 @@ calcPenalty(Solutions, Penalties) :-
 
 main :-
 	current_prolog_flag(argv, Argv),
-	writeln(Argv),
 	nth0(1, Argv, InputFile),
-	writeln(FirstArg),
 	nth0(2, Argv, OutputFile),
-	writeln(SecondArg),
     read_file(InputFile, OutputFile),
     getValidCombo(Solutions),
     calcPenalty(Solutions, Penalties),
