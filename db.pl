@@ -230,7 +230,6 @@ read_lines(InStream, [Head|Tail], OutputFile) :-
  	get_code(InStream, Char),
  	checkCharAndReadRest(Char, Chars, InStream, OutputFile),
  	atom_codes(Head, Chars),
-	nl,
 	read_lines(InStream, Tail, OutputFile).
 	
 checkCharAndReadRest(10, [], _, _) :- !.
